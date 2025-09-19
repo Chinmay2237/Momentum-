@@ -5,6 +5,8 @@ import 'package:task_management/domain/entities/task_entity.dart';
 import 'package:task_management/domain/entities/user_entity.dart';
 import 'package:task_management/domain/repositories/task_repository.dart';
 import 'package:task_management/domain/repositories/user_repository.dart';
+import 'package:dartz/dartz.dart';
+import 'package:task_management/core/errors/exception.dart';
 
 // Note: For a truly production-ready app, consider the following:
 // 1. Logging: Integrate a logging framework and a remote logging service (like Sentry) to track errors.
@@ -45,8 +47,10 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
       widget.userRepository.getUsers(),
     ]);
 
-    final tasksEither = results[0];
-    final usersEither = results[1];
+    // SOLUTION: Explicitly cast the results from the 'dynamic' list to their correct types.
+    // This is needed because Future.wait returns a List<dynamic>.
+    final tasksEither = results[0] as Either<Failure, List<TaskEntity>>;
+    final usersEither = results[1] as Either<Failure, List<UserEntity>>;
 
     tasksEither.fold(
       (failure) => _showError('Failed to load tasks: ${failure.message}'),
@@ -215,7 +219,6 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
               onPressed: () {
                 if (titleController.text.isEmpty) return;
                 
-                // Correctly create the TaskEntity with all required fields
                 final newTask = TaskEntity(
                   id: task?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
                   title: titleController.text,
@@ -223,7 +226,6 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
                   dueDate: dueDate,
                   priority: priority,
                   status: task?.status ?? 'To-Do',
-                  // Use 0 or a specific ID to denote "unassigned"
                   assignedUserId: task?.assignedUserId ?? 0, 
                   createdAt: task?.createdAt ?? DateTime.now(),
                   updatedAt: task != null ? DateTime.now() : null,
