@@ -3,8 +3,8 @@ import 'package:dartz/dartz.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:task_management/core/errors/exception.dart';
+import 'package:task_management/data/models/user_model.dart'; // Corrected Import
 import 'package:task_management/domain/entities/task_entity.dart';
-import 'package:task_management/domain/entities/user_entity.dart';
 import 'package:task_management/domain/repositories/task_repository.dart';
 import 'package:task_management/domain/repositories/user_repository.dart';
 
@@ -28,12 +28,11 @@ class TaskManagementPage extends StatefulWidget {
   _TaskManagementPageState createState() => _TaskManagementPageState();
 }
 
-// SOLUTION: Added 'extends State<TaskManagementPage>' to make this a valid State class.
 class _TaskManagementPageState extends State<TaskManagementPage> {
   // Use a single future to load all necessary data at once.
   late Future<void> _dataLoadingFuture;
   List<TaskEntity> _tasks = [];
-  Map<int, UserEntity> _userMap = {};
+  Map<int, UserModel> _userMap = {}; // Changed to UserModel
 
   @override
   void initState() {
@@ -48,9 +47,8 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
       widget.userRepository.getUsers(),
     ]);
 
-    // Explicitly cast the results from the 'dynamic' list to their correct types.
     final tasksEither = results[0] as Either<Failure, List<TaskEntity>>;
-    final usersEither = results[1] as Either<Failure, List<UserEntity>>;
+    final usersEither = results[1] as Either<Failure, List<UserModel>>; // Changed to UserModel
 
     tasksEither.fold(
       (failure) => _showError('Failed to load tasks: ${failure.message}'),
@@ -124,7 +122,7 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
       return;
     }
 
-    final selectedUser = await showDialog<UserEntity>(
+    final selectedUser = await showDialog<UserModel>(
       context: context,
       builder: (context) {
         return AlertDialog(
