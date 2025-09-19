@@ -12,7 +12,7 @@ class Failure {
 
 // Represents a failure from the server (API).
 class ServerFailure extends Failure {
-  final int? code;
+  final String? code;
   const ServerFailure({required String message, this.code}) : super(message);
 }
 
@@ -24,7 +24,7 @@ class CacheFailure extends Failure {
 // Custom Exception for API-related errors.
 class ServerException implements Exception {
   final String message;
-  final int? code;
+  final String? code;
 
   ServerException({required this.message, this.code});
 }

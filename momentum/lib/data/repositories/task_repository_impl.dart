@@ -17,6 +17,7 @@ class TaskRepositoryImpl implements TaskRepository {
       status: 'To-Do',
       assignedUserId: 101,
       createdAt: DateTime.now(),
+      isSynced: true,
     ),
     TaskEntity(
       id: '2',
@@ -27,14 +28,16 @@ class TaskRepositoryImpl implements TaskRepository {
       status: 'In Progress',
       assignedUserId: 102,
       createdAt: DateTime.now(),
+      isSynced: true,
     ),
   ];
 
   @override
   Future<Either<Failure, TaskEntity>> createTask(TaskEntity task) async {
     await Future.delayed(const Duration(milliseconds: 300)); // Simulate network latency
-    _tasks.add(task);
-    return Right(task);
+    final newTask = task.copyWith(isSynced: false); // Mark as not synced initially
+    _tasks.add(newTask);
+    return Right(newTask);
   }
 
   @override
@@ -55,8 +58,9 @@ class TaskRepositoryImpl implements TaskRepository {
     await Future.delayed(const Duration(milliseconds: 300));
     final index = _tasks.indexWhere((t) => t.id == task.id);
     if (index != -1) {
-      _tasks[index] = task;
-      return Right(task);
+      final updatedTask = task.copyWith(isSynced: false, updatedAt: DateTime.now());
+      _tasks[index] = updatedTask;
+      return Right(updatedTask);
     } else {
       return const Left(Failure('Task not found'));
     }
@@ -64,9 +68,13 @@ class TaskRepositoryImpl implements TaskRepository {
 
   @override
   Future<Either<Failure, void>> syncTasks() async {
-    // In a real app, this would sync local and remote data.
-    // For this dummy implementation, we'll just pretend it worked.
     await Future.delayed(const Duration(milliseconds: 500));
+    // Simulate syncing by marking all tasks as synced
+    for (var i = 0; i < _tasks.length; i++) {
+      if (!_tasks[i].isSynced) {
+        _tasks[i] = _tasks[i].copyWith(isSynced: true);
+      }
+    }
     return const Right(null);
   }
 }

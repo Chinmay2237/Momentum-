@@ -230,6 +230,8 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
                   assignedUserId: task?.assignedUserId ?? 0,
                   createdAt: task?.createdAt ?? DateTime.now(),
                   updatedAt: task != null ? DateTime.now() : null,
+                  isSynced: task?.isSynced ?? false, // Added isSynced
+                  reminderDate: task?.reminderDate, // Added reminderDate
                 );
                 Navigator.of(context).pop(newTask);
               },
