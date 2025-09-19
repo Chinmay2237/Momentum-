@@ -1,4 +1,3 @@
-// lib/main.dart (updated with comprehensive error handling)
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
@@ -14,7 +13,6 @@ import 'package:task_management/data/models/user_model.dart';
 import 'package:task_management/data/repositories/task_repository_impl.dart';
 import 'package:task_management/domain/repositories/task_repository.dart';
 import 'package:task_management/domain/repositories/user_repository.dart';
-import 'package:task_management/presentation/routes/app_routes.dart';
 
 import 'core/constants/api_constants.dart';
 import 'core/services/notification_service.dart';
@@ -22,51 +20,25 @@ import 'data/repositories/user_data_repository_impl.dart';
 import 'presentation/provider/task_provider.dart';
 import 'presentation/provider/user_provider.dart';
 import 'presentation/themes/app_themes.dart';
+import 'task_management.dart'; // Import the new task management page
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  print('🚀 Flutter initialized');
+
+  // ... (rest of your main function remains the same)
   
   try {
-    // Initialize Hive
     await Hive.initFlutter();
-    print('✅ Hive initialized');
-    
-    // Register adapters
     Hive.registerAdapter(TaskModelAdapter());
     Hive.registerAdapter(UserModelAdapter());
-    print('✅ Adapters registered');
     
-    // Open Hive boxes with error handling
-    Box<TaskModel> taskBox;
-    Box<UserModel> userBox;
+    final taskBox = await Hive.openBox<TaskModel>(AppConstants.hiveTasksBox);
+    final userBox = await Hive.openBox<UserModel>(AppConstants.hiveUsersBox);
     
-    try {
-      taskBox = await Hive.openBox<TaskModel>(AppConstants.hiveTasksBox);
-      userBox = await Hive.openBox<UserModel>(AppConstants.hiveUsersBox);
-      print('✅ Hive boxes opened');
-    } catch (e) {
-      print('⚠️ Hive box error: $e');
-      // Delete and recreate boxes if they're corrupted
-      await Hive.deleteBoxFromDisk(AppConstants.hiveTasksBox);
-      await Hive.deleteBoxFromDisk(AppConstants.hiveUsersBox);
-      taskBox = await Hive.openBox<TaskModel>(AppConstants.hiveTasksBox);
-      userBox = await Hive.openBox<UserModel>(AppConstants.hiveUsersBox);
-      print('✅ Hive boxes recreated');
-    }
-    
-    // Initialize services
     final sharedPreferences = await SharedPreferences.getInstance();
     final connectivity = Connectivity();
-    print('✅ Services initialized');
     
-    // Initialize notifications (optional, can fail silently)
-    try {
-      await NotificationService().init();
-      print('✅ Notifications initialized');
-    } catch (e) {
-      print('⚠️ Notifications failed: $e');
-    }
+    await NotificationService().init();
     
     runApp(MyApp(
       taskBox: taskBox,
@@ -74,32 +46,12 @@ void main() async {
       sharedPreferences: sharedPreferences,
       connectivity: connectivity,
     ));
-    print('✅ App started successfully');
     
-  } catch (e, stackTrace) {
-    print('❌ Fatal error during initialization: $e');
-    print('Stack trace: $stackTrace');
-    
-    // Fallback to a simple error app
+  } catch (e) {
     runApp(MaterialApp(
       home: Scaffold(
         body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text(
-                'App Initialization Failed',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 20),
-              Text('Error: $e'),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () => main(),
-                child: const Text('Restart App'),
-              ),
-            ],
-          ),
+          child: Text('Initialization Failed: $e'),
         ),
       ),
     ));
@@ -122,59 +74,46 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    try {
-      // Create services
-      final connectivityService = ConnectivityServiceImpl(connectivity: connectivity);
-      final localDataSource = LocalDataSourceImpl(taskBox: taskBox, userBox: userBox);
-      
-      // Create repositories
-      final TaskRepository taskRepository = TaskRepositoryImpl(
-        remoteDataSource: RemoteDataSourceImpl(client: http.Client()),
-        localDataSource: localDataSource,
-        connectivityService: connectivityService,
-      );
-      
-      final UserRepository userRepository = UserRepositoryImpl(
-        remoteDataSource: RemoteDataSourceImpl(client: http.Client()),
-        localDataSource: localDataSource,
-        connectivityService: connectivityService,
-        sharedPreferences: sharedPreferences,
-      );
+    final connectivityService = ConnectivityServiceImpl(connectivity: connectivity);
+    final localDataSource = LocalDataSourceImpl(taskBox: taskBox, userBox: userBox);
+    final remoteDataSource = RemoteDataSourceImpl(client: http.Client());
 
-      return MultiProvider(
-        providers: [
-          ChangeNotifierProvider(
-            create: (_) => UserProvider(
-              userRepository: userRepository,
-              sharedPreferences: sharedPreferences,
-            ),
-          ),
-          ChangeNotifierProvider(
-            create: (_) => TaskProvider(taskRepository: taskRepository),
-          ),
-        ],
-        child: MaterialApp(
-          title: AppConstants.appName,
-          theme: AppTheme.lightTheme,
-          darkTheme: AppTheme.darkTheme,
-          themeMode: ThemeMode.system,
-          debugShowCheckedModeBanner: false,
-          onGenerateRoute: AppRoutes.generateRoute,
-          initialRoute: '/',
-        ),
-      );
-    } catch (e, stackTrace) {
-      print('❌ Error building MyApp: $e');
-      print('Stack trace: $stackTrace');
-      
-      return MaterialApp(
-        home: Scaffold(
-          body: Center(
-            child: Text('Error building app: $e'),
+    final TaskRepository taskRepository = TaskRepositoryImpl(
+      remoteDataSource: remoteDataSource,
+      localDataSource: localDataSource,
+      connectivityService: connectivityService,
+    );
+    
+    final UserRepository userRepository = UserRepositoryImpl(
+      remoteDataSource: remoteDataSource,
+      localDataSource: localDataSource,
+      connectivityService: connectivityService,
+      sharedPreferences: sharedPreferences,
+    );
+
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (_) => UserProvider(
+            userRepository: userRepository,
+            sharedPreferences: sharedPreferences,
           ),
         ),
-      );
-    }
+        ChangeNotifierProvider(
+          create: (_) => TaskProvider(taskRepository: taskRepository),
+        ),
+      ],
+      child: MaterialApp(
+        title: AppConstants.appName,
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        themeMode: ThemeMode.system,
+        debugShowCheckedModeBanner: false,
+        home: TaskManagementPage( // Set as home
+          taskRepository: taskRepository,
+          userRepository: userRepository,
+        ),
+      ),
+    );
   }
 }
-
