@@ -3,16 +3,10 @@ import 'package:dartz/dartz.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:task_management/core/errors/exception.dart';
-import 'package:task_management/data/models/user_model.dart'; // Corrected Import
 import 'package:task_management/domain/entities/task_entity.dart';
+import 'package:task_management/domain/entities/user_entity.dart';
 import 'package:task_management/domain/repositories/task_repository.dart';
 import 'package:task_management/domain/repositories/user_repository.dart';
-
-// Note: For a truly production-ready app, consider the following:
-// 1. Logging: Integrate a logging framework and a remote logging service (like Sentry) to track errors.
-// 2. Environment Configuration: Use flavors or .env files to manage different environments (dev, staging, production).
-// 3. Testing: Write comprehensive unit, widget, and integration tests.
-// 4. State Management: For more complex scenarios, consider a more robust state management solution to handle data flow.
 
 class TaskManagementPage extends StatefulWidget {
   final TaskRepository taskRepository;
@@ -28,11 +22,11 @@ class TaskManagementPage extends StatefulWidget {
   _TaskManagementPageState createState() => _TaskManagementPageState();
 }
 
+// THIS IS THE CRITICAL FIX: The class now correctly extends State<TaskManagementPage>
 class _TaskManagementPageState extends State<TaskManagementPage> {
-  // Use a single future to load all necessary data at once.
   late Future<void> _dataLoadingFuture;
   List<TaskEntity> _tasks = [];
-  Map<int, UserModel> _userMap = {}; // Changed to UserModel
+  Map<int, UserEntity> _userMap = {};
 
   @override
   void initState() {
@@ -41,14 +35,13 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
   }
 
   Future<void> _loadData() async {
-    // Simultaneously fetch tasks and users.
     final results = await Future.wait([
       widget.taskRepository.getTasks(),
       widget.userRepository.getUsers(),
     ]);
 
     final tasksEither = results[0] as Either<Failure, List<TaskEntity>>;
-    final usersEither = results[1] as Either<Failure, List<UserModel>>; // Changed to UserModel
+    final usersEither = results[1] as Either<Failure, List<UserEntity>>;
 
     tasksEither.fold(
       (failure) => _showError('Failed to load tasks: ${failure.message}'),
@@ -61,7 +54,6 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
     );
   }
 
-  // Reloads all data from the repositories.
   void _refreshData() {
     setState(() {
       _dataLoadingFuture = _loadData();
@@ -122,7 +114,7 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
       return;
     }
 
-    final selectedUser = await showDialog<UserModel>(
+    final selectedUser = await showDialog<UserEntity>(
       context: context,
       builder: (context) {
         return AlertDialog(
