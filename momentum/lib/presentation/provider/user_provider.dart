@@ -1,7 +1,6 @@
 // lib/presentation/provider/user_provider.dart
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:task_management/core/services/auth_service.dart';
 import 'package:task_management/domain/repositories/user_repository.dart';
 
 import '../../domain/entities/task_entity.dart';
@@ -9,12 +8,10 @@ import '../../domain/entities/task_entity.dart';
 class UserProvider with ChangeNotifier {
   final UserRepository userRepository;
   final SharedPreferences sharedPreferences;
-  final AuthService? authService;
 
   UserProvider({
     required this.userRepository,
     required this.sharedPreferences,
-    required this.authService,
   });
 
   bool _isLoading = false;
@@ -76,13 +73,20 @@ Future<bool> checkAuthStatus() async {
     notifyListeners();
 
     try {
-      final response = await authService!.register(email, password);
-      _token = response['token'];
-      
-      await sharedPreferences.setString('token', _token!);
-      
-      _isLoading = false;
-      notifyListeners();
+      final result = await userRepository.register(email, password);
+      result.fold(
+        (failure) {
+          _error = failure.message;
+          _isLoading = false;
+          notifyListeners();
+        },
+        (token) {
+          _token = token;
+          sharedPreferences.setString('token', token);
+          _isLoading = false;
+          notifyListeners();
+        },
+      );
     } catch (e) {
       _isLoading = false;
       _error = e.toString();
@@ -98,13 +102,20 @@ Future<bool> checkAuthStatus() async {
     notifyListeners();
 
     try {
-      final response = await authService!.login(email, password);
-      _token = response['token'];
-      
-      await sharedPreferences.setString('token', _token!);
-      
-      _isLoading = false;
-      notifyListeners();
+      final result = await userRepository.login(email, password);
+      result.fold(
+        (failure) {
+          _error = failure.message;
+          _isLoading = false;
+          notifyListeners();
+        },
+        (token) {
+          _token = token;
+          sharedPreferences.setString('token', token);
+          _isLoading = false;
+          notifyListeners();
+        },
+      );
     } catch (e) {
       _isLoading = false;
       _error = e.toString();
