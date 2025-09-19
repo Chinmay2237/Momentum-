@@ -1,15 +1,9 @@
-// lib/domain/repositories/user_repository.dart
+
 import 'package:dartz/dartz.dart';
+import 'package:task_management/core/errors/exception.dart';
+import 'package:task_management/domain/entities/user_entity.dart';
 
-import '../../core/errors/exception.dart';
-import '../entities/task_entity.dart';
-
+// Abstract repository defining the contract for user-related operations.
 abstract class UserRepository {
   Future<Either<Failure, List<UserEntity>>> getUsers();
-  Future<Either<Failure, UserEntity>> getUser(String userId); // Change to String
-  Future<Either<Failure, String>> register(String email, String password);
-  Future<Either<Failure, String>> login(String email, String password);
-  Future<void> logout();
-  Future<Either<Failure, bool>> isLoggedIn();
-  Future<Either<Failure, String?>> getAuthToken();
 }

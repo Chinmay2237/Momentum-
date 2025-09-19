@@ -1,8 +1,7 @@
-// lib/domain/entities/task_entity.dart
-import 'package:equatable/equatable.dart';
+
 import 'package:equatable/equatable.dart';
 
-
+// The core entity for a task. Using Equatable to allow for value comparisons.
 class TaskEntity extends Equatable {
   final String id;
   final String title;
@@ -10,9 +9,7 @@ class TaskEntity extends Equatable {
   final DateTime dueDate;
   final String priority;
   final String status;
-  final int assignedUserId;
-  final bool isSynced;
-  final DateTime? reminderDate;
+  final int assignedUserId; // Using int to match the user ID type
   final DateTime createdAt;
   final DateTime? updatedAt;
 
@@ -24,27 +21,11 @@ class TaskEntity extends Equatable {
     required this.priority,
     required this.status,
     required this.assignedUserId,
-    this.isSynced = true,
-    this.reminderDate,
     required this.createdAt,
     this.updatedAt,
   });
 
-  @override
-  List<Object?> get props => [
-        id,
-        title,
-        description,
-        dueDate,
-        priority,
-        status,
-        assignedUserId,
-        isSynced,
-        reminderDate,
-        createdAt,
-        updatedAt,
-      ];
-
+  // A copyWith method to easily create a new instance with updated fields.
   TaskEntity copyWith({
     String? id,
     String? title,
@@ -53,8 +34,6 @@ class TaskEntity extends Equatable {
     String? priority,
     String? status,
     int? assignedUserId,
-    bool? isSynced,
-    DateTime? reminderDate,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -66,35 +45,21 @@ class TaskEntity extends Equatable {
       priority: priority ?? this.priority,
       status: status ?? this.status,
       assignedUserId: assignedUserId ?? this.assignedUserId,
-      isSynced: isSynced ?? this.isSynced,
-      reminderDate: reminderDate ?? this.reminderDate,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }
-}
-
-// lib/domain/entities/user_entity.dart
-
-class UserEntity extends Equatable {
-  final int id;
-  final String email;
-  final String firstName;
-  final String lastName;
-  final String avatar;
-  final DateTime? createdAt;
-
-  const UserEntity({
-    required this.id,
-    required this.email,
-    required this.firstName,
-    required this.lastName,
-    required this.avatar,
-    this.createdAt,
-  });
-
-  String get fullName => '$firstName $lastName';
 
   @override
-  List<Object?> get props => [id, email, firstName, lastName, avatar, createdAt];
+  List<Object?> get props => [
+        id,
+        title,
+        description,
+        dueDate,
+        priority,
+        status,
+        assignedUserId,
+        createdAt,
+        updatedAt,
+      ];
 }

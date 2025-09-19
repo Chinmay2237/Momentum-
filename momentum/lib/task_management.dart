@@ -22,7 +22,6 @@ class TaskManagementPage extends StatefulWidget {
   _TaskManagementPageState createState() => _TaskManagementPageState();
 }
 
-// THIS IS THE CRITICAL FIX: The class now correctly extends State<TaskManagementPage>
 class _TaskManagementPageState extends State<TaskManagementPage> {
   late Future<void> _dataLoadingFuture;
   List<TaskEntity> _tasks = [];
@@ -35,10 +34,14 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
   }
 
   Future<void> _loadData() async {
+    if (!mounted) return;
+
     final results = await Future.wait([
       widget.taskRepository.getTasks(),
       widget.userRepository.getUsers(),
     ]);
+
+    if (!mounted) return;
 
     final tasksEither = results[0] as Either<Failure, List<TaskEntity>>;
     final usersEither = results[1] as Either<Failure, List<UserEntity>>;
@@ -62,23 +65,27 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
 
   void _createTask() async {
     final task = await _showTaskDialog();
-    if (task != null) {
+    if (task != null && mounted) {
       final result = await widget.taskRepository.createTask(task);
-      result.fold(
-        (failure) => _showError('Failed to create task: ${failure.message}'),
-        (_) => _refreshData(),
-      );
+      if (mounted) {
+        result.fold(
+          (failure) => _showError('Failed to create task: ${failure.message}'),
+          (_) => _refreshData(),
+        );
+      }
     }
   }
 
   void _editTask(TaskEntity task) async {
     final updatedTask = await _showTaskDialog(task: task);
-    if (updatedTask != null) {
+    if (updatedTask != null && mounted) {
       final result = await widget.taskRepository.updateTask(updatedTask);
-      result.fold(
-        (failure) => _showError('Failed to update task: ${failure.message}'),
-        (_) => _refreshData(),
-      );
+      if (mounted) {
+        result.fold(
+          (failure) => _showError('Failed to update task: ${failure.message}'),
+          (_) => _refreshData(),
+        );
+      }
     }
   }
 
@@ -98,21 +105,23 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
       ),
     );
 
-    if (confirm == true) {
+    if (confirm == true && mounted) {
       final result = await widget.taskRepository.deleteTask(taskId);
-      result.fold(
-        (failure) => _showError('Failed to delete task: ${failure.message}'),
-        (_) => _refreshData(),
-      );
+      if (mounted) {
+        result.fold(
+          (failure) => _showError('Failed to delete task: ${failure.message}'),
+          (_) => _refreshData(),
+        );
+      }
     }
   }
 
   void _assignTask(TaskEntity task) async {
-    final users = _userMap.values.toList();
-    if (users.isEmpty) {
+    if (_userMap.isEmpty) {
       _showError("No users available to assign.");
       return;
     }
+    final users = _userMap.values.toList();
 
     final selectedUser = await showDialog<UserEntity>(
       context: context,
@@ -138,13 +147,15 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
       },
     );
 
-    if (selectedUser != null) {
+    if (selectedUser != null && mounted) {
       final updatedTask = task.copyWith(assignedUserId: selectedUser.id);
       final result = await widget.taskRepository.updateTask(updatedTask);
-      result.fold(
-        (failure) => _showError('Failed to assign task: ${failure.message}'),
-        (_) => _refreshData(),
-      );
+      if (mounted) {
+        result.fold(
+          (failure) => _showError('Failed to assign task: ${failure.message}'),
+          (_) => _refreshData(),
+        );
+      }
     }
   }
 
