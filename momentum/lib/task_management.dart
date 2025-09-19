@@ -28,6 +28,7 @@ class TaskManagementPage extends StatefulWidget {
   _TaskManagementPageState createState() => _TaskManagementPageState();
 }
 
+// SOLUTION: Added 'extends State<TaskManagementPage>' to make this a valid State class.
 class _TaskManagementPageState extends State<TaskManagementPage> {
   // Use a single future to load all necessary data at once.
   late Future<void> _dataLoadingFuture;
@@ -47,7 +48,7 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
       widget.userRepository.getUsers(),
     ]);
 
-    // SOLUTION: Explicitly cast the results from the 'dynamic' list to their correct types.
+    // Explicitly cast the results from the 'dynamic' list to their correct types.
     final tasksEither = results[0] as Either<Failure, List<TaskEntity>>;
     final usersEither = results[1] as Either<Failure, List<UserEntity>>;
 
