@@ -1,4 +1,4 @@
-// lib/data/datasources/remote_data_source.dart
+'''// lib/data/datasources/remote_data_source.dart
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:task_management/core/constants/api_constants.dart';
@@ -25,13 +25,10 @@ class RemoteDataSourceImpl implements RemoteDataSource {
 
   RemoteDataSourceImpl({required this.client, this.authToken});
 
-  Map<String, String> get _headers {
-    final headers = {'Content-Type': 'application/json'};
-    if (authToken != null) {
-      headers['Authorization'] = 'Bearer $authToken';
-    }
-    return headers;
-  }
+  Map<String, String> get _headers => {
+        'Content-Type': 'application/json',
+        if (authToken != null) 'Authorization': 'Bearer $authToken',
+      };
 
   @override
   Future<String> register(String email, String password) async {
@@ -39,7 +36,7 @@ class RemoteDataSourceImpl implements RemoteDataSource {
       final response = await client.post(
         Uri.parse('${ApiConstants.baseUrl}${ApiConstants.register}'),
         body: json.encode({'email': email, 'password': password}),
-        headers: _headers,
+        headers: {'Content-Type': 'application/json'},
       );
 
       if (response.statusCode == 200) {
@@ -67,7 +64,7 @@ class RemoteDataSourceImpl implements RemoteDataSource {
       final response = await client.post(
         Uri.parse('${ApiConstants.baseUrl}${ApiConstants.login}'),
         body: json.encode({'email': email, 'password': password}),
-        headers: _headers,
+        headers: {'Content-Type': 'application/json'},
       );
 
       if (response.statusCode == 200) {
@@ -254,3 +251,4 @@ class RemoteDataSourceImpl implements RemoteDataSource {
     }
   }
 }
+''
