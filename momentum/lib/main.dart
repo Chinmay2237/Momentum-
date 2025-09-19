@@ -17,7 +17,6 @@ import 'package:task_management/domain/repositories/user_repository.dart';
 import 'package:task_management/presentation/routes/app_routes.dart';
 
 import 'core/constants/api_constants.dart';
-import 'core/services/auth_service.dart';
 import 'core/services/notification_service.dart';
 import 'data/repositories/user_data_repository_impl.dart';
 import 'presentation/provider/task_provider.dart';
@@ -148,7 +147,6 @@ class MyApp extends StatelessWidget {
             create: (_) => UserProvider(
               userRepository: userRepository,
               sharedPreferences: sharedPreferences,
-              authService: AuthService(),
             ),
           ),
           ChangeNotifierProvider(
@@ -179,3 +177,4 @@ class MyApp extends StatelessWidget {
     }
   }
 }
+
