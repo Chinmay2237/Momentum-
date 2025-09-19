@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 
 import '../constants/api_constants.dart';
 import '../errors/exception.dart';
+import '../errors/failure.dart';
 
 class ApiService {
   final http.Client client;
@@ -21,7 +22,7 @@ class ApiService {
     if (response.statusCode == 200 || response.statusCode == 201) {
       return json.decode(response.body);
     } else {
-      throw ServerException(message: 'Failed to post data: ${response.statusCode}');
+      throw ServerException('Failed to post data: ${response.statusCode}');
     }
   }
 
@@ -34,11 +35,11 @@ class ApiService {
     if (response.statusCode == 200) {
       return json.decode(response.body);
     } else {
-      throw ServerException(message: 'Failed to get data: ${response.statusCode}');
+      throw ServerException('Failed to get data: ${response.statusCode}');
     }
   }
 
-  Future<Map<String, dynamic>> put(String endpoint, 
+Future<Map<String, dynamic>> put(String endpoint, 
       {required Map<String, dynamic> body}) async {
     final response = await client.put(
       Uri.parse('${ApiConstants.baseUrl}/$endpoint'),
@@ -49,7 +50,7 @@ class ApiService {
     if (response.statusCode == 200) {
       return json.decode(response.body);
     } else {
-      throw ServerException(message: 'Failed to update data: ${response.statusCode}');
+      throw ServerException('Failed to update data: ${response.statusCode}');
     }
   }
 
@@ -60,7 +61,7 @@ class ApiService {
     );
 
     if (response.statusCode != 200 && response.statusCode != 204) {
-      throw ServerException(message: 'Failed to delete data: ${response.statusCode}');
+      throw ServerException('Failed to delete data: ${response.statusCode}');
     }
   }
 }

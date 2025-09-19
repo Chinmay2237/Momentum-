@@ -78,6 +78,7 @@ class _RegisterPageState extends State<RegisterPage> {
                             await userProvider.register(
                               _emailController.text,
                               _passwordController.text,
+                              
                             );
                             Navigator.pushReplacementNamed(context, '/home');
                           } catch (e) {

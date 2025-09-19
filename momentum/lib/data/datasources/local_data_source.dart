@@ -4,6 +4,7 @@ import 'package:task_management/data/models/task_model.dart';
 import 'package:task_management/data/models/user_model.dart';
 
 import '../../core/errors/exception.dart';
+import '../../core/errors/failure.dart';
 
 abstract class LocalDataSource {
   Future<void> saveTask(TaskModel task);
@@ -28,8 +29,8 @@ class LocalDataSourceImpl implements LocalDataSource {
       await taskBox.put(task.id, task);
     } catch (e) {
       throw CacheException(
-        message: 'Failed to save task',
-        code: 'SAVE_TASK_FAILED',
+      'Failed to save task',
+       
       );
     }
   }
@@ -40,8 +41,8 @@ class LocalDataSourceImpl implements LocalDataSource {
       return taskBox.values.toList();
     } catch (e) {
       throw CacheException(
-        message: 'Failed to get tasks',
-        code: 'GET_TASKS_FAILED',
+        'Failed to get tasks',
+        
       );
     }
   }
@@ -52,8 +53,8 @@ class LocalDataSourceImpl implements LocalDataSource {
       return taskBox.get(taskId);
     } catch (e) {
       throw CacheException(
-        message: 'Failed to get task',
-        code: 'GET_TASK_FAILED',
+        'Failed to get task',
+       
       );
     }
   }
@@ -64,8 +65,8 @@ class LocalDataSourceImpl implements LocalDataSource {
       await taskBox.delete(taskId);
     } catch (e) {
       throw CacheException(
-        message: 'Failed to delete task',
-        code: 'DELETE_TASK_FAILED',
+        'Failed to delete task',
+       
       );
     }
   }
@@ -79,8 +80,8 @@ class LocalDataSourceImpl implements LocalDataSource {
       await userBox.putAll(userMap);
     } catch (e) {
       throw CacheException(
-        message: 'Failed to save users',
-        code: 'SAVE_USERS_FAILED',
+      'Failed to save users',
+      
       );
     }
   }
@@ -91,8 +92,8 @@ class LocalDataSourceImpl implements LocalDataSource {
       return userBox.values.toList();
     } catch (e) {
       throw CacheException(
-        message: 'Failed to get users',
-        code: 'GET_USERS_FAILED',
+       'Failed to get users',
+      
       );
     }
   }
@@ -103,8 +104,8 @@ class LocalDataSourceImpl implements LocalDataSource {
       return userBox.get(userId);
     } catch (e) {
       throw CacheException(
-        message: 'Failed to get user',
-        code: 'GET_USER_FAILED',
+   'Failed to get user',
+     
       );
     }
   }
@@ -116,8 +117,8 @@ class LocalDataSourceImpl implements LocalDataSource {
       await userBox.clear();
     } catch (e) {
       throw CacheException(
-        message: 'Failed to clear data',
-        code: 'CLEAR_DATA_FAILED',
+       'Failed to clear data',
+    
       );
     }
   }

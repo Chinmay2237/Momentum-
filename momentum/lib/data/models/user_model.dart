@@ -1,7 +1,6 @@
 // lib/data/models/user_model.dart
 import 'package:hive/hive.dart';
-
-import '../../domain/entities/task_entity.dart';
+import '../../domain/entities/user_entity.dart';
 
 part 'user_model.g.dart';
 
@@ -14,24 +13,12 @@ class UserModel {
   final String email;
   
   @HiveField(2)
-  final String firstName;
-  
-  @HiveField(3)
-  final String lastName;
-  
-  @HiveField(4)
-  final String avatar;
-  
-  @HiveField(5)
-  final DateTime? createdAt;
+  final String fullName;
 
   UserModel({
     required this.id,
     required this.email,
-    required this.firstName,
-    required this.lastName,
-    required this.avatar,
-    this.createdAt,
+    required this.fullName,
   });
 
   // Add toEntity method
@@ -39,10 +26,7 @@ class UserModel {
     return UserEntity(
       id: id,
       email: email,
-      firstName: firstName,
-      lastName: lastName,
-      avatar: avatar,
-      createdAt: createdAt,
+      fullName: fullName,
     );
   }
 
@@ -51,10 +35,7 @@ class UserModel {
     return UserModel(
       id: entity.id,
       email: entity.email,
-      firstName: entity.firstName,
-      lastName: entity.lastName,
-      avatar: entity.avatar,
-      createdAt: entity.createdAt,
+      fullName: entity.fullName,
     );
   }
 
@@ -62,12 +43,7 @@ class UserModel {
     return UserModel(
       id: json['id'],
       email: json['email'],
-      firstName: json['first_name'] ?? json['firstName'] ?? '',
-      lastName: json['last_name'] ?? json['lastName'] ?? '',
-      avatar: json['avatar'] ?? '',
-      createdAt: json['createdAt'] != null 
-          ? DateTime.parse(json['createdAt']) 
-          : null,
+      fullName: json['full_name'] ?? json['fullName'] ?? '${json['first_name'] ?? ''} ${json['last_name'] ?? ''}'.trim(),
     );
   }
 
@@ -75,10 +51,7 @@ class UserModel {
     return {
       'id': id,
       'email': email,
-      'first_name': firstName,
-      'last_name': lastName,
-      'avatar': avatar,
-      'createdAt': createdAt?.toIso8601String(),
+      'full_name': fullName,
     };
   }
 }

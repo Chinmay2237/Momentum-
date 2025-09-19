@@ -1,6 +1,6 @@
 
 import 'package:dartz/dartz.dart';
-import 'package:task_management/core/errors/exception.dart';
+import 'package:task_management/core/errors/failure.dart';
 import 'package:task_management/domain/entities/user_entity.dart';
 import 'package:task_management/domain/repositories/user_repository.dart';
 
@@ -27,18 +27,20 @@ class UserRepositoryImpl implements UserRepository {
       _currentUser = user;
       return Right(user);
     } else {
-      return const Left(ServerFailure(message: 'Invalid credentials'));
+      return Left(ServerFailure( 'Invalid credentials'));
     }
   }
 
-  @override
-  Future<Either<Failure, UserEntity>> register(String fullName, String email, String password) async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    final newUser = UserEntity(id: _users.length + 101, fullName: fullName, email: email);
-    // In a real app, you would add the user to the list.
-    _currentUser = newUser;
-    return Right(newUser);
-  }
+@override
+Future<Either<Failure, UserEntity>> register(String email, String password) async {
+  await Future.delayed(const Duration(milliseconds: 300));
+  // Generate a fullName from email or use a default value
+  final fullName = email.split('@').first; // Or use "New User" as default
+  final newUser = UserEntity(id: _users.length + 101, fullName: fullName, email: email);
+  // In a real app, you would add the user to the list.
+  _currentUser = newUser;
+  return Right(newUser);
+}
 
   @override
   Future<Either<Failure, UserEntity?>> getCurrentUser() async {

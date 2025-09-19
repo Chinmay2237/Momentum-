@@ -164,7 +164,7 @@ class _TaskFormState extends State<TaskForm> {
                   for (final user in userProvider.users)
                     DropdownMenuItem<int>(
                       value: user.id,
-                      child: Text('${user.firstName} ${user.lastName}'),
+                      child: Text('${user.fullName}'),
                     )
                 ],
                 onChanged: (int? newValue) {

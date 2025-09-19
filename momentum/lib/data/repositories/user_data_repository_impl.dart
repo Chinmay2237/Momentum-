@@ -7,9 +7,11 @@ import 'package:task_management/data/datasources/remote_data_source.dart';
 import 'package:task_management/domain/repositories/user_repository.dart';
 
 import '../../core/errors/exception.dart';
+import '../../core/errors/failure.dart';
 import '../../domain/entities/task_entity.dart';
+import '../../domain/entities/user_entity.dart';
 
-class UserRepositoryImpl implements UserRepository {
+abstract class UserRepositoryImpl implements UserRepository {
   final RemoteDataSource remoteDataSource;
   final LocalDataSource localDataSource;
   final ConnectivityService connectivityService;
@@ -21,70 +23,60 @@ class UserRepositoryImpl implements UserRepository {
     required this.connectivityService,
     required this.sharedPreferences,
   });
-
-  @override
-  Future<Either<Failure, String>> register(String email, String password) async {
-    try {
-      final hasConnection = await connectivityService.isConnected;
-      
-      if (!hasConnection) {
-        return Left(NetworkFailure(
-          message: 'No internet connection',
-          code: 'NO_CONNECTION',
-        ));
-      }
-
-      final token = await remoteDataSource.register(email, password);
-      
-      // Save token to shared preferences
-      await sharedPreferences.setString('auth_token', token);
-      await sharedPreferences.setString('user_email', email);
-      
-      return Right(token);
-    } on ServerException catch (e) {
-      return Left(ServerFailure(
-        message: e.message,
-        code: e.code,
-      ));
-    } catch (e) {
-      return Left(ServerFailure(
-        message: 'Unexpected error during registration: $e',
-        code: 'UNEXPECTED_ERROR',
-      ));
+@override
+Future<Either<Failure, UserEntity>> register(String email, String password) async {
+  try {
+    final hasConnection = await connectivityService.isConnected;
+    
+    if (!hasConnection) {
+      return Left(NetworkFailure('No internet connection'));
     }
+
+    final token = await remoteDataSource.register(email, password);
+    
+    // Save token to shared preferences
+    await sharedPreferences.setString('auth_token', token);
+    await sharedPreferences.setString('user_email', email);
+    
+    // Create and return a UserEntity instead of just the token
+    // You'll need to get the actual user data from somewhere
+    // This is a temporary solution - you should modify your API to return user data
+    final userEntity = UserEntity(
+      id: 0, // You need to get the actual user ID from registration
+      fullName: 'New User', // You need to get the actual name
+      email: email,
+    );
+    
+    return Right(userEntity);
+  } on ServerException catch (e) {
+    return Left(ServerFailure(e.message));
+  } catch (e) {
+    return Left(ServerFailure('Unexpected error during registration: $e'));
   }
-
-  @override
-  Future<Either<Failure, String>> login(String email, String password) async {
-    try {
-      final hasConnection = await connectivityService.isConnected;
-      
-      if (!hasConnection) {
-        return Left(NetworkFailure(
-          message: 'No internet connection',
-          code: 'NO_CONNECTION',
-        ));
-      }
-
-      final token = await remoteDataSource.login(email, password);
-      
-      // Save token to shared preferences
-      await sharedPreferences.setString('auth_token', token);
-      await sharedPreferences.setString('user_email', email);
-      
-      return Right(token);
-    } on ServerException catch (e) {
-      return Left(ServerFailure(
-        message: e.message,
-        code: e.code,
-      ));
-    } catch (e) {
-      return Left(ServerFailure(
-        message: 'Unexpected error during login: $e',
-        code: 'UNEXPECTED_ERROR',
-      ));
+}
+@override
+Future<Either<Failure, UserEntity>> login(String email, String password) async {
+  try {
+    final hasConnection = await connectivityService.isConnected;
+    
+    if (!hasConnection) {
+      return Left(NetworkFailure('No internet connection'));
     }
+
+    final userEntity = await remoteDataSource.login(email, password);
+     final token = await remoteDataSource.register(email, password);
+    
+    // Save token to shared preferences if needed
+   await sharedPreferences.setString('auth_token', token);
+    await sharedPreferences.setString('user_email', email);
+    
+    return Right(userEntity as UserEntity);
+  } on ServerException catch (e) {
+    return Left(ServerFailure(e.message));
+  } catch (e) {
+    return Left(ServerFailure('Unexpected error during login: $e'));
   }
+}
 
   @override
   Future<Either<Failure, void>> logout() async {
@@ -94,8 +86,8 @@ class UserRepositoryImpl implements UserRepository {
       return const Right(null);
     } catch (e) {
       return Left(CacheFailure(
-        message: 'Failed to logout: $e',
-        code: 'LOGOUT_FAILED',
+       'Failed to logout: $e',
+       
       ));
     }
   }
@@ -121,19 +113,19 @@ class UserRepositoryImpl implements UserRepository {
         return Right(localUsers.map((e) => e.toEntity()).toList());
       } on CacheException catch (cacheError) {
         return Left(ServerFailure(
-          message: '${e.message} and ${cacheError.message}',
-          code: e.code,
+        '${e.message} and ${cacheError.message}',
+        
         ));
       }
     } on CacheException catch (e) {
       return Left(CacheFailure(
-        message: e.message,
-        code: e.code,
+       e.message,
+       
       ));
     } catch (e) {
       return Left(ServerFailure(
-        message: 'Unexpected error while fetching users: $e',
-        code: 'UNEXPECTED_ERROR',
+      'Unexpected error while fetching users: $e',
+       
       ));
     }
   }
@@ -166,19 +158,19 @@ Future<Either<Failure, UserEntity>> getUser(String userId) async {
         return Right(localUser.toEntity());
       }
       return Left(CacheFailure(
-        message: 'User not found in local storage',
-        code: 'USER_NOT_FOUND',
+        'User not found in local storage',
+      
       ));
     }
   } on CacheException catch (e) {
     return Left(CacheFailure(
-      message: e.message,
-      code: e.code,
+     e.message,
+     
     ));
   } catch (e) {
     return Left(ServerFailure(
-      message: 'Unexpected error while fetching user: $e',
-      code: 'UNEXPECTED_ERROR',
+      'Unexpected error while fetching user: $e',
+    
     ));
   }
 }
@@ -189,8 +181,8 @@ Future<Either<Failure, UserEntity>> getUser(String userId) async {
       return Right(token != null);
     } catch (e) {
       return Left(CacheFailure(
-        message: 'Failed to check login status: $e',
-        code: 'CHECK_LOGIN_FAILED',
+     'Failed to check login status: $e',
+      
       ));
     }
   }
@@ -202,8 +194,8 @@ Future<Either<Failure, UserEntity>> getUser(String userId) async {
       return Right(token);
     } catch (e) {
       return Left(CacheFailure(
-        message: 'Failed to get auth token: $e',
-        code: 'GET_TOKEN_FAILED',
+       'Failed to get auth token: $e',
+       
       ));
     }
   }

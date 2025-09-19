@@ -36,10 +36,7 @@ class LocalStorageServiceImpl implements LocalStorageService {
     try {
       await _taskBox.put(task.id, task);
     } catch (e) {
-      throw CacheException(
-        message: 'Failed to save task: $e',
-        code: 'SAVE_TASK_FAILED',
-      );
+      throw CacheException('Failed to save task: $e', 'SAVE_TASK_FAILED');
     }
   }
 
@@ -48,10 +45,7 @@ class LocalStorageServiceImpl implements LocalStorageService {
     try {
       return _taskBox.values.toList();
     } catch (e) {
-      throw CacheException(
-        message: 'Failed to get tasks: $e',
-        code: 'GET_TASKS_FAILED',
-      );
+      throw CacheException('Failed to get tasks: $e', 'GET_TASKS_FAILED');
     }
   }
 
@@ -60,10 +54,7 @@ class LocalStorageServiceImpl implements LocalStorageService {
     try {
       return _taskBox.get(taskId);
     } catch (e) {
-      throw CacheException(
-        message: 'Failed to get task: $e',
-        code: 'GET_TASK_FAILED',
-      );
+      throw CacheException('Failed to get task: $e', 'GET_TASK_FAILED');
     }
   }
 
@@ -72,10 +63,7 @@ class LocalStorageServiceImpl implements LocalStorageService {
     try {
       await _taskBox.delete(taskId);
     } catch (e) {
-      throw CacheException(
-        message: 'Failed to delete task: $e',
-        code: 'DELETE_TASK_FAILED',
-      );
+      throw CacheException('Failed to delete task: $e', 'DELETE_TASK_FAILED');
     }
   }
 
@@ -87,10 +75,7 @@ class LocalStorageServiceImpl implements LocalStorageService {
       };
       await _userBox.putAll(userMap);
     } catch (e) {
-      throw CacheException(
-        message: 'Failed to save users: $e',
-        code: 'SAVE_USERS_FAILED',
-      );
+      throw CacheException('Failed to save users: $e', 'SAVE_USERS_FAILED');
     }
   }
 
@@ -99,10 +84,7 @@ class LocalStorageServiceImpl implements LocalStorageService {
     try {
       return _userBox.values.toList();
     } catch (e) {
-      throw CacheException(
-        message: 'Failed to get users: $e',
-        code: 'GET_USERS_FAILED',
-      );
+      throw CacheException('Failed to get users: $e', 'GET_USERS_FAILED');
     }
   }
 
@@ -111,10 +93,7 @@ class LocalStorageServiceImpl implements LocalStorageService {
     try {
       return _userBox.get(userId);
     } catch (e) {
-      throw CacheException(
-        message: 'Failed to get user: $e',
-        code: 'GET_USER_FAILED',
-      );
+      throw CacheException('Failed to get user: $e', 'GET_USER_FAILED');
     }
   }
 
@@ -125,10 +104,7 @@ class LocalStorageServiceImpl implements LocalStorageService {
       await _userBox.clear();
       await _settingsBox.clear();
     } catch (e) {
-      throw CacheException(
-        message: 'Failed to clear data: $e',
-        code: 'CLEAR_DATA_FAILED',
-      );
+      throw CacheException('Failed to clear data: $e', 'CLEAR_DATA_FAILED');
     }
   }
 
@@ -139,10 +115,7 @@ class LocalStorageServiceImpl implements LocalStorageService {
       await _userBox.close();
       await _settingsBox.close();
     } catch (e) {
-      throw CacheException(
-        message: 'Failed to close boxes: $e',
-        code: 'CLOSE_BOXES_FAILED',
-      );
+      throw CacheException('Failed to close boxes: $e', 'CLOSE_BOXES_FAILED');
     }
   }
 
@@ -151,10 +124,7 @@ class LocalStorageServiceImpl implements LocalStorageService {
     try {
       return _taskBox.values.where((task) => !task.isSynced).toList();
     } catch (e) {
-      throw CacheException(
-        message: 'Failed to get unsynced tasks: $e',
-        code: 'GET_UNSYNCED_TASKS_FAILED',
-      );
+      throw CacheException('Failed to get unsynced tasks: $e', 'GET_UNSYNCED_TASKS_FAILED');
     }
   }
 
@@ -163,10 +133,7 @@ class LocalStorageServiceImpl implements LocalStorageService {
       final deletedIds = _settingsBox.get('deleted_task_ids', defaultValue: <String>[]);
       return List<String>.from(deletedIds);
     } catch (e) {
-      throw CacheException(
-        message: 'Failed to get deleted task IDs: $e',
-        code: 'GET_DELETED_IDS_FAILED',
-      );
+      throw CacheException('Failed to get deleted task IDs: $e', 'GET_DELETED_IDS_FAILED');
     }
   }
 
@@ -176,10 +143,7 @@ class LocalStorageServiceImpl implements LocalStorageService {
       deletedIds.add(taskId);
       await _settingsBox.put('deleted_task_ids', deletedIds);
     } catch (e) {
-      throw CacheException(
-        message: 'Failed to mark task as deleted: $e',
-        code: 'MARK_TASK_DELETED_FAILED',
-      );
+      throw CacheException('Failed to mark task as deleted: $e', 'MARK_TASK_DELETED_FAILED');
     }
   }
 
@@ -189,10 +153,7 @@ class LocalStorageServiceImpl implements LocalStorageService {
       deletedIds.remove(taskId);
       await _settingsBox.put('deleted_task_ids', deletedIds);
     } catch (e) {
-      throw CacheException(
-        message: 'Failed to remove deleted mark: $e',
-        code: 'REMOVE_DELETED_MARK_FAILED',
-      );
+      throw CacheException('Failed to remove deleted mark: $e', 'REMOVE_DELETED_MARK_FAILED');
     }
   }
 }

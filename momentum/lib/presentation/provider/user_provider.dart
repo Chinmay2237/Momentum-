@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:task_management/domain/repositories/user_repository.dart';
 
 import '../../domain/entities/task_entity.dart';
+import '../../domain/entities/user_entity.dart';
 
 class UserProvider with ChangeNotifier {
   final UserRepository userRepository;
@@ -67,7 +68,7 @@ Future<bool> checkAuthStatus() async {
   }
 
   // Register user
-  Future<void> register(String email, String password) async {
+  Future<void> register(String email, String password,) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -81,8 +82,8 @@ Future<bool> checkAuthStatus() async {
           notifyListeners();
         },
         (token) {
-          _token = token;
-          sharedPreferences.setString('token', token);
+          _token = token as String?;
+          sharedPreferences.setString('token', token as String);
           _isLoading = false;
           notifyListeners();
         },
@@ -110,8 +111,8 @@ Future<bool> checkAuthStatus() async {
           notifyListeners();
         },
         (token) {
-          _token = token;
-          sharedPreferences.setString('token', token);
+          _token = token as String?;
+          sharedPreferences.setString('token', token as String);
           _isLoading = false;
           notifyListeners();
         },

@@ -1,6 +1,6 @@
 
 import 'package:dartz/dartz.dart';
-import 'package:task_management/core/errors/exception.dart';
+import 'package:task_management/core/errors/failure.dart';
 import 'package:task_management/domain/entities/task_entity.dart';
 import 'package:task_management/domain/repositories/task_repository.dart';
 

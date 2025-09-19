@@ -1,6 +1,6 @@
 
 import 'package:dartz/dartz.dart';
-import 'package:task_management/core/errors/exception.dart';
+import 'package:task_management/core/errors/failure.dart';
 import 'package:task_management/domain/entities/task_entity.dart';
 
 // Abstract repository defining the contract for task-related operations.

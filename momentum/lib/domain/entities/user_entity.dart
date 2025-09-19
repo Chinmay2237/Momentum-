@@ -1,7 +1,6 @@
-
+// lib/domain/entities/user_entity.dart
 import 'package:equatable/equatable.dart';
 
-// The core entity for a user.
 class UserEntity extends Equatable {
   final int id;
   final String fullName;

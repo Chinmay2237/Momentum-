@@ -2,7 +2,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:task_management/domain/entities/task_entity.dart';
 
-import '../../core/errors/exception.dart';
+import '../../core/errors/failure.dart';
 import '../../domain/repositories/task_repository.dart';
 
 class TaskProvider with ChangeNotifier {
