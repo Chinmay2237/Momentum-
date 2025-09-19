@@ -21,6 +21,12 @@ class CacheFailure extends Failure {
   const CacheFailure({required String message}) : super(message);
 }
 
+// Represents a failure due to network issues (e.g., no internet).
+class NetworkFailure extends Failure {
+  final String? code;
+  const NetworkFailure({required String message, this.code}) : super(message);
+}
+
 // Custom Exception for API-related errors.
 class ServerException implements Exception {
   final String message;
