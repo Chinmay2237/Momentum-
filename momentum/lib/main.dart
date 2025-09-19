@@ -1,4 +1,4 @@
-'''// lib/main.dart (updated with comprehensive error handling)
+// lib/main.dart (updated with comprehensive error handling)
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
@@ -162,13 +162,7 @@ class MyApp extends StatelessWidget {
           themeMode: ThemeMode.system,
           debugShowCheckedModeBanner: false,
           onGenerateRoute: AppRoutes.generateRoute,
-          initialRoute: sharedPreferences.getString('token') != null ? '/home' : '/',
-          // Add a fallback home in case routing fails
-          home: const Scaffold(
-            body: Center(
-              child: CircularProgressIndicator(),
-            ),
-          ),
+          initialRoute: '/',
         ),
       );
     } catch (e, stackTrace) {
@@ -185,4 +179,3 @@ class MyApp extends StatelessWidget {
     }
   }
 }
-''
