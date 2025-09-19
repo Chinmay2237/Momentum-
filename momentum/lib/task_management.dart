@@ -1,8 +1,10 @@
-
-import 'package:dartz/dartz.dart' hide State;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:task_management/core/errors/exception.dart';
+
+// Import dartz with a prefix to avoid conflicts
+import 'package:dartz/dartz.dart' as dartz;
+
+import 'package:task_management/core/errors/failure.dart';
 import 'package:task_management/domain/entities/task_entity.dart';
 import 'package:task_management/domain/entities/user_entity.dart';
 import 'package:task_management/domain/repositories/task_repository.dart';
@@ -19,7 +21,7 @@ class TaskManagementPage extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _TaskManagementPageState createState() => _TaskManagementPageState();
+  State<TaskManagementPage> createState() => _TaskManagementPageState();
 }
 
 class _TaskManagementPageState extends State<TaskManagementPage> {
@@ -34,17 +36,13 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
   }
 
   Future<void> _loadData() async {
-    if (!mounted) return;
-
-    final results = await Future.wait([
+    final results = await Future.wait<dynamic>([
       widget.taskRepository.getTasks(),
       widget.userRepository.getUsers(),
     ]);
 
-    if (!mounted) return;
-
-    final tasksEither = results[0] as Either<Failure, List<TaskEntity>>;
-    final usersEither = results[1] as Either<Failure, List<UserEntity>>;
+    final tasksEither = results[0] as dartz.Either<Failure, List<TaskEntity>>;
+    final usersEither = results[1] as dartz.Either<Failure, List<UserEntity>>;
 
     tasksEither.fold(
       (failure) => _showError('Failed to load tasks: ${failure.message}'),
@@ -53,7 +51,8 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
 
     usersEither.fold(
       (failure) => _showError('Failed to load users: ${failure.message}'),
-      (users) => setState(() => _userMap = {for (var user in users) user.id: user}),
+      (users) =>
+          setState(() => _userMap = {for (var user in users) user.id: user}),
     );
   }
 
@@ -65,27 +64,23 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
 
   void _createTask() async {
     final task = await _showTaskDialog();
-    if (task != null && mounted) {
+    if (task != null) {
       final result = await widget.taskRepository.createTask(task);
-      if (mounted) {
-        result.fold(
-          (failure) => _showError('Failed to create task: ${failure.message}'),
-          (_) => _refreshData(),
-        );
-      }
+      result.fold(
+        (failure) => _showError('Failed to create task: ${failure.message}'),
+        (_) => _refreshData(),
+      );
     }
   }
 
   void _editTask(TaskEntity task) async {
     final updatedTask = await _showTaskDialog(task: task);
-    if (updatedTask != null && mounted) {
+    if (updatedTask != null) {
       final result = await widget.taskRepository.updateTask(updatedTask);
-      if (mounted) {
-        result.fold(
-          (failure) => _showError('Failed to update task: ${failure.message}'),
-          (_) => _refreshData(),
-        );
-      }
+      result.fold(
+        (failure) => _showError('Failed to update task: ${failure.message}'),
+        (_) => _refreshData(),
+      );
     }
   }
 
@@ -96,7 +91,9 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
         title: const Text('Confirm Deletion'),
         content: const Text('Are you sure you want to delete this task?'),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
+          TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel')),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
             child: const Text('Delete', style: TextStyle(color: Colors.red)),
@@ -105,23 +102,21 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
       ),
     );
 
-    if (confirm == true && mounted) {
+    if (confirm == true) {
       final result = await widget.taskRepository.deleteTask(taskId);
-      if (mounted) {
-        result.fold(
-          (failure) => _showError('Failed to delete task: ${failure.message}'),
-          (_) => _refreshData(),
-        );
-      }
+      result.fold(
+        (failure) => _showError('Failed to delete task: ${failure.message}'),
+        (_) => _refreshData(),
+      );
     }
   }
 
   void _assignTask(TaskEntity task) async {
-    if (_userMap.isEmpty) {
+    final users = _userMap.values.toList();
+    if (users.isEmpty) {
       _showError("No users available to assign.");
       return;
     }
-    final users = _userMap.values.toList();
 
     final selectedUser = await showDialog<UserEntity>(
       context: context,
@@ -136,7 +131,7 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
               itemBuilder: (context, index) {
                 final user = users[index];
                 return ListTile(
-                  title: Text(user.fullName),
+                  title: Text('${user.fullName}'),
                   subtitle: Text(user.email),
                   onTap: () => Navigator.of(context).pop(user),
                 );
@@ -147,21 +142,20 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
       },
     );
 
-    if (selectedUser != null && mounted) {
+    if (selectedUser != null) {
       final updatedTask = task.copyWith(assignedUserId: selectedUser.id);
       final result = await widget.taskRepository.updateTask(updatedTask);
-      if (mounted) {
-        result.fold(
-          (failure) => _showError('Failed to assign task: ${failure.message}'),
-          (_) => _refreshData(),
-        );
-      }
+      result.fold(
+        (failure) => _showError('Failed to assign task: ${failure.message}'),
+        (_) => _refreshData(),
+      );
     }
   }
 
   Future<TaskEntity?> _showTaskDialog({TaskEntity? task}) async {
     final titleController = TextEditingController(text: task?.title);
-    final descriptionController = TextEditingController(text: task?.description);
+    final descriptionController =
+        TextEditingController(text: task?.description);
     String priority = task?.priority ?? 'Medium';
     DateTime dueDate = task?.dueDate ?? DateTime.now();
 
@@ -176,18 +170,21 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
               children: [
                 TextField(
                   controller: titleController,
-                  decoration: const InputDecoration(labelText: 'Title', border: OutlineInputBorder()),
+                  decoration: const InputDecoration(
+                      labelText: 'Title', border: OutlineInputBorder()),
                 ),
                 const SizedBox(height: 16),
                 TextField(
                   controller: descriptionController,
-                  decoration: const InputDecoration(labelText: 'Description', border: OutlineInputBorder()),
+                  decoration: const InputDecoration(
+                      labelText: 'Description', border: OutlineInputBorder()),
                   maxLines: 3,
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
                   value: priority,
-                  decoration: const InputDecoration(labelText: 'Priority', border: OutlineInputBorder()),
+                  decoration: const InputDecoration(
+                      labelText: 'Priority', border: OutlineInputBorder()),
                   items: ['Low', 'Medium', 'High']
                       .map((p) => DropdownMenuItem(value: p, child: Text(p)))
                       .toList(),
@@ -195,15 +192,17 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
                 ),
                 const SizedBox(height: 16),
                 StatefulBuilder(builder: (context, setState) {
-                   return ListTile(
+                  return ListTile(
                     title: Text('Due: ${DateFormat.yMd().format(dueDate)}'),
                     trailing: const Icon(Icons.calendar_today),
                     onTap: () async {
                       final selectedDate = await showDatePicker(
                         context: context,
                         initialDate: dueDate,
-                        firstDate: DateTime.now().subtract(const Duration(days: 365)),
-                        lastDate: DateTime.now().add(const Duration(days: 3650)),
+                        firstDate:
+                            DateTime.now().subtract(const Duration(days: 365)),
+                        lastDate:
+                            DateTime.now().add(const Duration(days: 3650)),
                       );
                       if (selectedDate != null) {
                         setState(() => dueDate = selectedDate);
@@ -215,13 +214,16 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
+            TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Cancel')),
             ElevatedButton(
               onPressed: () {
                 if (titleController.text.isEmpty) return;
 
                 final newTask = TaskEntity(
-                  id: task?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
+                  id: task?.id ??
+                      DateTime.now().millisecondsSinceEpoch.toString(),
                   title: titleController.text,
                   description: descriptionController.text,
                   dueDate: dueDate,
@@ -230,8 +232,6 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
                   assignedUserId: task?.assignedUserId ?? 0,
                   createdAt: task?.createdAt ?? DateTime.now(),
                   updatedAt: task != null ? DateTime.now() : null,
-                  isSynced: task?.isSynced ?? false,
-                  reminderDate: task?.reminderDate,
                 );
                 Navigator.of(context).pop(newTask);
               },
@@ -244,7 +244,6 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
   }
 
   void _showError(String message) {
-    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: Colors.red),
     );
@@ -263,11 +262,14 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
               return const Center(child: CircularProgressIndicator());
             }
             if (snapshot.hasError) {
-              return Center(child: Text('An unexpected error occurred: ${snapshot.error}'));
+              return Center(
+                  child:
+                      Text('An unexpected error occurred: ${snapshot.error}'));
             }
             if (_tasks.isEmpty) {
               return const Center(
-                  child: Text('No tasks found. Pull down to refresh or create one!'));
+                  child: Text(
+                      'No tasks found. Pull down to refresh or create one!'));
             }
             return ListView.builder(
               padding: const EdgeInsets.all(8.0),
@@ -281,7 +283,8 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
                   margin: const EdgeInsets.symmetric(vertical: 8.0),
                   child: ListTile(
                     leading: _buildPriorityIcon(task.priority),
-                    title: Text(task.title, style: const TextStyle(fontWeight: FontWeight.bold)),
+                    title: Text(task.title,
+                        style: const TextStyle(fontWeight: FontWeight.bold)),
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -290,11 +293,14 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
                           const SizedBox(height: 4.0),
                         ],
                         Text('Due: ${DateFormat.yMd().format(task.dueDate)}',
-                            style: const TextStyle(fontSize: 12.0, color: Colors.grey)),
+                            style: const TextStyle(
+                                fontSize: 12.0, color: Colors.grey)),
                         if (assignedUser != null) ...[
-                           const SizedBox(height: 4.0),
-                           Text('Assigned to: ${assignedUser.fullName}',
-                               style: const TextStyle(fontSize: 12.0, fontStyle: FontStyle.italic)),
+                          const SizedBox(height: 4.0),
+                          Text(
+                              'Assigned to: ${assignedUser.fullName}',
+                              style: const TextStyle(
+                                  fontSize: 12.0, fontStyle: FontStyle.italic)),
                         ]
                       ],
                     ),
@@ -302,19 +308,20 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.person_add, color: Colors.green),
+                          icon:
+                              const Icon(Icons.person_add, color: Colors.green),
                           onPressed: () => _assignTask(task),
                           tooltip: 'Assign Task',
                         ),
                         IconButton(
                           icon: const Icon(Icons.edit, color: Colors.blue),
                           onPressed: () => _editTask(task),
-                           tooltip: 'Edit Task',
+                          tooltip: 'Edit Task',
                         ),
                         IconButton(
                           icon: const Icon(Icons.delete, color: Colors.red),
                           onPressed: () => _deleteTask(task.id),
-                           tooltip: 'Delete Task',
+                          tooltip: 'Delete Task',
                         ),
                       ],
                     ),
@@ -336,9 +343,16 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
   Widget _buildPriorityIcon(String priority) {
     Color color;
     switch (priority) {
-      case 'High': color = Colors.red; break;
-      case 'Medium': color = Colors.orange; break;
-      case 'Low': default: color = Colors.green; break;
+      case 'High':
+        color = Colors.red;
+        break;
+      case 'Medium':
+        color = Colors.orange;
+        break;
+      case 'Low':
+      default:
+        color = Colors.green;
+        break;
     }
     return Icon(Icons.flag, color: color);
   }

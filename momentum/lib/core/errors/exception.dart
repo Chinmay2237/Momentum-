@@ -1,45 +1,20 @@
-
-// A generic class to represent a failure in the application,
-// such as a network error or a parsing error.
-class Failure {
-  final String message;
-
-  const Failure(this.message);
-
-  @override
-  String toString() => message;
-}
-
-// Represents a failure from the server (API).
-class ServerFailure extends Failure {
-  final String? code;
-  const ServerFailure({required String message, this.code}) : super(message);
-}
-
-// Represents a failure from the local cache (e.g., Hive).
-class CacheFailure extends Failure {
-  final String? code;
-  const CacheFailure({required String message, this.code}) : super(message);
-}
-
-// Represents a failure due to network issues (e.g., no internet).
-class NetworkFailure extends Failure {
-  final String? code;
-  const NetworkFailure({required String message, this.code}) : super(message);
-}
-
-// Custom Exception for API-related errors.
+// lib/core/errors/exception.dart
 class ServerException implements Exception {
   final String message;
   final String? code;
 
-  ServerException({required this.message, this.code});
+  ServerException(this.message, [this.code]);
+  
+  @override
+  String toString() => code != null ? '[$code] $message' : message;
 }
 
-// Custom Exception for Cache-related errors.
 class CacheException implements Exception {
   final String message;
   final String? code;
 
-  CacheException({required this.message, this.code});
+  CacheException(this.message, [this.code]);
+  
+  @override
+  String toString() => code != null ? '[$code] $message' : message;
 }
