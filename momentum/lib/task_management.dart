@@ -1,18 +1,16 @@
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:provider/provider.dart';
 import 'package:task_management/domain/entities/task_entity.dart';
 import 'package:task_management/domain/entities/user_entity.dart';
 import 'package:task_management/domain/repositories/task_repository.dart';
 import 'package:task_management/domain/repositories/user_repository.dart';
-import 'package:task_management/presentation/provider/user_provider.dart';
 
 // Note: For a truly production-ready app, consider the following:
-// 1. Logging: Integrate a logging framework (like `logger`) and a remote logging service (like Sentry or Firebase Crashlytics) to track errors.
-// 2. Environment Configuration: Use a proper system (like .env files or flavors) to manage different environments (dev, staging, production) and their specific configurations (e.g., API URLs).
-// 3. Testing: Write comprehensive unit, widget, and integration tests to ensure code quality and prevent regressions.
-// 4. Dependency Injection: For larger apps, use a dedicated dependency injection framework (like `get_it`) for better organization.
+// 1. Logging: Integrate a logging framework and a remote logging service (like Sentry) to track errors.
+// 2. Environment Configuration: Use flavors or .env files to manage different environments (dev, staging, production).
+// 3. Testing: Write comprehensive unit, widget, and integration tests.
+// 4. State Management: For more complex scenarios, consider a more robust state management solution to handle data flow.
 
 class TaskManagementPage extends StatefulWidget {
   final TaskRepository taskRepository;
@@ -29,23 +27,43 @@ class TaskManagementPage extends StatefulWidget {
 }
 
 class _TaskManagementPageState extends State<TaskManagementPage> {
-  late Future<List<TaskEntity>> _tasksFuture;
+  // Use a single future to load all necessary data at once.
+  late Future<void> _dataLoadingFuture;
+  List<TaskEntity> _tasks = [];
+  Map<int, UserEntity> _userMap = {};
 
   @override
   void initState() {
     super.initState();
-    _tasksFuture = _loadTasks();
+    _dataLoadingFuture = _loadData();
   }
 
-  Future<List<TaskEntity>> _loadTasks() {
-    final result = widget.taskRepository.getTasks();
-    return result.then((either) => either.fold(
-          (failure) {
-            _showError('Failed to load tasks: ${failure.message}');
-            return []; // Return an empty list on failure
-          },
-          (tasks) => tasks,
-        ));
+  Future<void> _loadData() async {
+    // Simultaneously fetch tasks and users.
+    final results = await Future.wait([
+      widget.taskRepository.getTasks(),
+      widget.userRepository.getUsers(),
+    ]);
+
+    final tasksEither = results[0];
+    final usersEither = results[1];
+
+    tasksEither.fold(
+      (failure) => _showError('Failed to load tasks: ${failure.message}'),
+      (tasks) => setState(() => _tasks = tasks),
+    );
+
+    usersEither.fold(
+      (failure) => _showError('Failed to load users: ${failure.message}'),
+      (users) => setState(() => _userMap = {for (var user in users) user.id: user}),
+    );
+  }
+
+  // Reloads all data from the repositories.
+  void _refreshData() {
+    setState(() {
+      _dataLoadingFuture = _loadData();
+    });
   }
 
   void _createTask() async {
@@ -54,9 +72,7 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
       final result = await widget.taskRepository.createTask(task);
       result.fold(
         (failure) => _showError('Failed to create task: ${failure.message}'),
-        (task) => setState(() {
-          _tasksFuture = _loadTasks();
-        }),
+        (_) => _refreshData(),
       );
     }
   }
@@ -67,9 +83,7 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
       final result = await widget.taskRepository.updateTask(updatedTask);
       result.fold(
         (failure) => _showError('Failed to update task: ${failure.message}'),
-        (task) => setState(() {
-          _tasksFuture = _loadTasks();
-        }),
+        (_) => _refreshData(),
       );
     }
   }
@@ -79,7 +93,7 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Confirm Deletion'),
-        content: const Text('Are you sure you want to delete this task? This action cannot be undone.'),
+        content: const Text('Are you sure you want to delete this task?'),
         actions: [
           TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
           TextButton(
@@ -94,29 +108,17 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
       final result = await widget.taskRepository.deleteTask(taskId);
       result.fold(
         (failure) => _showError('Failed to delete task: ${failure.message}'),
-        (_) => setState(() {
-          _tasksFuture = _loadTasks();
-        }),
+        (_) => _refreshData(),
       );
     }
   }
 
   void _assignTask(TaskEntity task) async {
-    // In a production app, you would fetch the list of users from your UserRepository.
-    // The `UserProvider` is a good place to manage user state.
-    // final userProvider = Provider.of<UserProvider>(context, listen: false);
-    // final either = await userProvider.getUsers();
-    //
-    // This is an example of how you would handle the result:
-    // List<UserEntity> users = either.fold((failure) => [], (userList) => userList);
-
-    // For demonstration purposes, we'll use a placeholder list of users.
-    // Replace this with your actual user fetching logic.
-    final users = [
-      UserEntity(id: 'user1', name: 'Alice', email: 'alice@example.com'),
-      UserEntity(id: 'user2', name: 'Bob', email: 'bob@example.com'),
-      UserEntity(id: 'user3', name: 'Charlie', email: 'charlie@example.com'),
-    ];
+    final users = _userMap.values.toList();
+    if (users.isEmpty) {
+      _showError("No users available to assign.");
+      return;
+    }
 
     final selectedUser = await showDialog<UserEntity>(
       context: context,
@@ -131,11 +133,9 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
               itemBuilder: (context, index) {
                 final user = users[index];
                 return ListTile(
-                  title: Text(user.name),
+                  title: Text(user.fullName),
                   subtitle: Text(user.email),
-                  onTap: () {
-                    Navigator.of(context).pop(user);
-                  },
+                  onTap: () => Navigator.of(context).pop(user),
                 );
               },
             ),
@@ -145,13 +145,11 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
     );
 
     if (selectedUser != null) {
-      final updatedTask = task.copyWith(assignedTo: selectedUser.id);
+      final updatedTask = task.copyWith(assignedUserId: selectedUser.id);
       final result = await widget.taskRepository.updateTask(updatedTask);
       result.fold(
         (failure) => _showError('Failed to assign task: ${failure.message}'),
-        (task) => setState(() {
-          _tasksFuture = _loadTasks();
-        }),
+        (_) => _refreshData(),
       );
     }
   }
@@ -188,41 +186,36 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
                   items: ['Low', 'Medium', 'High']
                       .map((p) => DropdownMenuItem(value: p, child: Text(p)))
                       .toList(),
-                  onChanged: (value) {
-                    if (value != null) {
-                      priority = value;
-                    }
-                  },
+                  onChanged: (value) => priority = value ?? priority,
                 ),
                 const SizedBox(height: 16),
-                ListTile(
-                  title: Text('Due Date: ${DateFormat.yMd().format(dueDate)}'),
-                  trailing: const Icon(Icons.calendar_today),
-                  onTap: () async {
-                    final selectedDate = await showDatePicker(
-                      context: context,
-                      initialDate: dueDate,
-                      firstDate: DateTime.now().subtract(const Duration(days: 365)),
-                      lastDate: DateTime.now().add(const Duration(days: 3650)),
-                    );
-                    if (selectedDate != null) {
-                      // We need to rebuild the dialog state
-                      (context as Element).markNeedsBuild();
-                      dueDate = selectedDate;
-                    }
-                  },
-                ),
+                StatefulBuilder(builder: (context, setState) {
+                   return ListTile(
+                    title: Text('Due: ${DateFormat.yMd().format(dueDate)}'),
+                    trailing: const Icon(Icons.calendar_today),
+                    onTap: () async {
+                      final selectedDate = await showDatePicker(
+                        context: context,
+                        initialDate: dueDate,
+                        firstDate: DateTime.now().subtract(const Duration(days: 365)),
+                        lastDate: DateTime.now().add(const Duration(days: 3650)),
+                      );
+                      if (selectedDate != null) {
+                        setState(() => dueDate = selectedDate);
+                      }
+                    },
+                  );
+                }),
               ],
             ),
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
-            ),
+            TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
             ElevatedButton(
               onPressed: () {
                 if (titleController.text.isEmpty) return;
+                
+                // Correctly create the TaskEntity with all required fields
                 final newTask = TaskEntity(
                   id: task?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
                   title: titleController.text,
@@ -230,7 +223,10 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
                   dueDate: dueDate,
                   priority: priority,
                   status: task?.status ?? 'To-Do',
-                  assignedTo: task?.assignedTo,
+                  // Use 0 or a specific ID to denote "unassigned"
+                  assignedUserId: task?.assignedUserId ?? 0, 
+                  createdAt: task?.createdAt ?? DateTime.now(),
+                  updatedAt: task != null ? DateTime.now() : null,
                 );
                 Navigator.of(context).pop(newTask);
               },
@@ -245,104 +241,89 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
   void _showError(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red,
-      ),
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Momentum'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Momentum'), centerTitle: true),
       body: RefreshIndicator(
-        onRefresh: () async {
-          setState(() {
-            _tasksFuture = _loadTasks();
-          });
-        },
-        child: FutureBuilder<List<TaskEntity>>(
-          future: _tasksFuture,
+        onRefresh: () async => _refreshData(),
+        child: FutureBuilder<void>(
+          future: _dataLoadingFuture,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
-            } else if (snapshot.hasError) {
-              return Center(child: Text('Error: ${snapshot.error}'));
-            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-              return const Center(
-                  child: Text('No tasks found. Pull down to refresh or create a new one!'));
-            } else {
-              final tasks = snapshot.data!;
-              return ListView.builder(
-                padding: const EdgeInsets.all(8.0),
-                itemCount: tasks.length,
-                itemBuilder: (context, index) {
-                  final task = tasks[index];
-                  return Card(
-                    elevation: 4.0,
-                    margin: const EdgeInsets.symmetric(vertical: 8.0),
-                    child: ListTile(
-                      leading: _buildPriorityIcon(task.priority),
-                      title: Text(
-                        task.title,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (task.description.isNotEmpty) ...[
-                            Text(task.description),
-                            const SizedBox(height: 4.0),
-                          ],
-                          Text(
-                            'Due: ${DateFormat.yMd().format(task.dueDate)}',
-                            style: const TextStyle(fontSize: 12.0, color: Colors.grey),
-                          ),
-                          if (task.assignedTo != null) ...[
-                             const SizedBox(height: 4.0),
-                             Text(
-                               'Assigned to: ${task.assignedTo}',
-                               style: const TextStyle(fontSize: 12.0, fontStyle: FontStyle.italic),
-                             ),
-                          ]
-                        ],
-                      ),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.person_add, color: Colors.green),
-                            onPressed: () => _assignTask(task),
-                            tooltip: 'Assign Task',
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.edit, color: Colors.blue),
-                            onPressed: () => _editTask(task),
-                             tooltip: 'Edit Task',
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.delete, color: Colors.red),
-                            onPressed: () => _deleteTask(task.id),
-                             tooltip: 'Delete Task',
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              );
             }
+            if (snapshot.hasError) {
+              return Center(child: Text('An unexpected error occurred: ${snapshot.error}'));
+            }
+            if (_tasks.isEmpty) {
+              return const Center(
+                  child: Text('No tasks found. Pull down to refresh or create one!'));
+            }
+            return ListView.builder(
+              padding: const EdgeInsets.all(8.0),
+              itemCount: _tasks.length,
+              itemBuilder: (context, index) {
+                final task = _tasks[index];
+                final assignedUser = _userMap[task.assignedUserId];
+
+                return Card(
+                  elevation: 4.0,
+                  margin: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: ListTile(
+                    leading: _buildPriorityIcon(task.priority),
+                    title: Text(task.title, style: const TextStyle(fontWeight: FontWeight.bold)),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (task.description.isNotEmpty) ...[
+                          Text(task.description),
+                          const SizedBox(height: 4.0),
+                        ],
+                        Text('Due: ${DateFormat.yMd().format(task.dueDate)}',
+                            style: const TextStyle(fontSize: 12.0, color: Colors.grey)),
+                        if (assignedUser != null) ...[
+                           const SizedBox(height: 4.0),
+                           Text('Assigned to: ${assignedUser.fullName}',
+                               style: const TextStyle(fontSize: 12.0, fontStyle: FontStyle.italic)),
+                        ]
+                      ],
+                    ),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.person_add, color: Colors.green),
+                          onPressed: () => _assignTask(task),
+                          tooltip: 'Assign Task',
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.edit, color: Colors.blue),
+                          onPressed: () => _editTask(task),
+                           tooltip: 'Edit Task',
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete, color: Colors.red),
+                          onPressed: () => _deleteTask(task.id),
+                           tooltip: 'Delete Task',
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            );
           },
         ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _createTask,
-        child: const Icon(Icons.add),
         tooltip: 'Create Task',
+        child: const Icon(Icons.add),
       ),
     );
   }
@@ -350,16 +331,9 @@ class _TaskManagementPageState extends State<TaskManagementPage> {
   Widget _buildPriorityIcon(String priority) {
     Color color;
     switch (priority) {
-      case 'High':
-        color = Colors.red;
-        break;
-      case 'Medium':
-        color = Colors.orange;
-        break;
-      case 'Low':
-      default:
-        color = Colors.green;
-        break;
+      case 'High': color = Colors.red; break;
+      case 'Medium': color = Colors.orange; break;
+      case 'Low': default: color = Colors.green; break;
     }
     return Icon(Icons.flag, color: color);
   }
