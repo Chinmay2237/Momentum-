@@ -18,7 +18,6 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   void initState() {
     super.initState();
-    // Pre-fill with the required email
     _emailController.text = 'eve.holt@reqres.in';
   }
 
@@ -27,9 +26,7 @@ class _RegisterPageState extends State<RegisterPage> {
     final userProvider = Provider.of<UserProvider>(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Register'),
-      ),
+      appBar: AppBar(title: const Text('Register')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -47,9 +44,6 @@ class _RegisterPageState extends State<RegisterPage> {
                   if (value == null || value.isEmpty) {
                     return 'Please enter your email';
                   }
-                  if (!value.contains('@')) {
-                    return 'Please enter a valid email';
-                  }
                   return null;
                 },
               ),
@@ -64,9 +58,6 @@ class _RegisterPageState extends State<RegisterPage> {
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter your password';
-                  }
-                  if (value.length < 6) {
-                    return 'Password must be at least 6 characters';
                   }
                   return null;
                 },
@@ -88,10 +79,9 @@ class _RegisterPageState extends State<RegisterPage> {
                               _emailController.text,
                               _passwordController.text,
                             );
-                            // Navigate to home page on success
                             Navigator.pushReplacementNamed(context, '/home');
                           } catch (e) {
-                            // Error is already handled in the provider
+                            // Error handled by provider
                           }
                         }
                       },

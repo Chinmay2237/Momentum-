@@ -27,11 +27,20 @@ class UserProvider with ChangeNotifier {
   String? get token => _token;
   List<UserEntity> get users => _users; // Add users getter
 
-  // Check authentication status
-  Future<bool> checkAuthStatus() async {
+// lib/presentation/provider/user_provider.dart
+Future<bool> checkAuthStatus() async {
+  try {
+    print('🔐 Checking token in SharedPreferences');
     final token = sharedPreferences.getString('token');
-    return token != null && token.isNotEmpty;
+    print('📋 Token value: $token');
+    final isLoggedIn = token != null && token.isNotEmpty;
+    print('🔑 Is logged in: $isLoggedIn');
+    return isLoggedIn;
+  } catch (e) {
+    print('❌ Error checking auth status: $e');
+    return false;
   }
+}
 
   // Load users
   Future<void> loadUsers() async {

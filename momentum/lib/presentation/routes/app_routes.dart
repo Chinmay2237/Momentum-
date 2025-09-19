@@ -5,6 +5,7 @@ import '../../data/models/task_model.dart';
 import '../pages/fallback_home.dart';
 import '../pages/home_screen.dart';
 import '../pages/login_page.dart';
+import '../pages/register_page.dart';
 import '../pages/splash_screen.dart';
 import '../widget/task_form.dart';
 
@@ -12,7 +13,7 @@ import '../widget/task_form.dart';
 class AppRoutes {
   static Route<dynamic> generateRoute(RouteSettings settings) {
     print('🔀 Generating route for: ${settings.name}');
-    
+
     switch (settings.name) {
       case '/':
         print('➡️ Navigating to SplashPage');
@@ -24,13 +25,16 @@ class AppRoutes {
         print('➡️ Navigating to HomePage');
         return MaterialPageRoute(builder: (_) => const HomePage());
       case '/task_form':
-        final task = settings.arguments is TaskModel 
-            ? settings.arguments as TaskModel 
+        final task = settings.arguments is TaskModel
+            ? settings.arguments as TaskModel
             : null;
         print('➡️ Navigating to TaskForm with task: ${task?.id}');
         return MaterialPageRoute(
           builder: (_) => TaskForm(task: task),
         );
+      // lib/presentation/routes/app_routes.dart
+      case '/register':
+        return MaterialPageRoute(builder: (_) => const RegisterPage());
       default:
         print('❌ Unknown route: ${settings.name}');
         return MaterialPageRoute(

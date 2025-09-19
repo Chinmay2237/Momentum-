@@ -18,9 +18,9 @@ class _LoginPageState extends State<LoginPage> {
   @override
   void initState() {
     super.initState();
-    // Pre-fill with the required email
+    // Pre-fill with test credentials
     _emailController.text = 'eve.holt@reqres.in';
-    _passwordController.text = 'cityslicka'; // Default password for reqres.in
+    _passwordController.text = 'cityslicka'; // Test password
   }
 
   @override
@@ -28,9 +28,7 @@ class _LoginPageState extends State<LoginPage> {
     final userProvider = Provider.of<UserProvider>(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Login'),
-      ),
+      appBar: AppBar(title: const Text('Login')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -48,9 +46,6 @@ class _LoginPageState extends State<LoginPage> {
                   if (value == null || value.isEmpty) {
                     return 'Please enter your email';
                   }
-                  if (!value.contains('@')) {
-                    return 'Please enter a valid email';
-                  }
                   return null;
                 },
               ),
@@ -65,9 +60,6 @@ class _LoginPageState extends State<LoginPage> {
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter your password';
-                  }
-                  if (value.length < 6) {
-                    return 'Password must be at least 6 characters';
                   }
                   return null;
                 },
@@ -89,10 +81,9 @@ class _LoginPageState extends State<LoginPage> {
                               _emailController.text,
                               _passwordController.text,
                             );
-                            // Navigate to home page on success
                             Navigator.pushReplacementNamed(context, '/home');
                           } catch (e) {
-                            // Error is already handled in the provider
+                            // Error handled by provider
                           }
                         }
                       },
@@ -103,10 +94,9 @@ class _LoginPageState extends State<LoginPage> {
               const SizedBox(height: 16),
               TextButton(
                 onPressed: () {
-                  // Navigate to register page
                   Navigator.pushNamed(context, '/register');
                 },
-                child: const Text('Don\'t have an account? Register'),
+                child: const Text('Create Account'),
               ),
             ],
           ),
