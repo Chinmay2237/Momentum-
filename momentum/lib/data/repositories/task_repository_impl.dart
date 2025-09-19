@@ -61,4 +61,12 @@ class TaskRepositoryImpl implements TaskRepository {
       return const Left(Failure('Task not found'));
     }
   }
+
+  @override
+  Future<Either<Failure, void>> syncTasks() async {
+    // In a real app, this would sync local and remote data.
+    // For this dummy implementation, we'll just pretend it worked.
+    await Future.delayed(const Duration(milliseconds: 500));
+    return const Right(null);
+  }
 }

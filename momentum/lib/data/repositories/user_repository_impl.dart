@@ -11,10 +11,38 @@ class UserRepositoryImpl implements UserRepository {
     UserEntity(id: 102, fullName: 'Bob Williams', email: 'bob@example.com'),
     UserEntity(id: 103, fullName: 'Charlie Brown', email: 'charlie@example.com'),
   ];
+  UserEntity? _currentUser;
 
   @override
   Future<Either<Failure, List<UserEntity>>> getUsers() async {
     await Future.delayed(const Duration(milliseconds: 200)); // Simulate network latency
     return Right(_users);
+  }
+
+  @override
+  Future<Either<Failure, UserEntity>> login(String email, String password) async {
+    await Future.delayed(const Duration(milliseconds: 300));
+    final user = _users.firstWhere((user) => user.email == email, orElse: () => const UserEntity(id: -1, fullName: '', email: ''));
+    if (user.id != -1) {
+      _currentUser = user;
+      return Right(user);
+    } else {
+      return const Left(ServerFailure(message: 'Invalid credentials'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, UserEntity>> register(String fullName, String email, String password) async {
+    await Future.delayed(const Duration(milliseconds: 300));
+    final newUser = UserEntity(id: _users.length + 101, fullName: fullName, email: email);
+    // In a real app, you would add the user to the list.
+    _currentUser = newUser;
+    return Right(newUser);
+  }
+
+  @override
+  Future<Either<Failure, UserEntity?>> getCurrentUser() async {
+    await Future.delayed(const Duration(milliseconds: 100));
+    return Right(_currentUser);
   }
 }
