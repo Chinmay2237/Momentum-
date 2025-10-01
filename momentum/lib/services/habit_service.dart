@@ -1,51 +1,23 @@
 
 import 'package:momentum/models/habit.dart';
+import 'package:momentum/services/database_helper.dart';
 
 class HabitService {
-  // Singleton pattern
-  static final HabitService _instance = HabitService._internal();
-  factory HabitService() {
-    return _instance;
-  }
-  HabitService._internal();
+  final DatabaseHelper _db = DatabaseHelper();
 
-  final List<Habit> _habits = [
-    Habit(
-      id: '1',
-      name: 'Morning Meditation',
-      description: 'Meditate for 10 minutes every morning.',
-      plantType: 'assets/images/plant1.png',
-      goal: 30,
-      progress: 10,
-      createdAt: DateTime.now(),
-    ),
-    Habit(
-      id: '2',
-      name: 'Read a Book',
-      description: 'Read 20 pages of a book every day.',
-      plantType: 'assets/images/plant2.png',
-      goal: 30,
-      progress: 5,
-      createdAt: DateTime.now(),
-    ),
-  ];
-
-  List<Habit> getHabits() {
-    return _habits;
+  Future<List<Habit>> getHabits() async {
+    return await _db.getHabits();
   }
 
-  void addHabit(Habit habit) {
-    _habits.add(habit);
+  Future<void> addHabit(Habit habit) async {
+    await _db.insertHabit(habit);
   }
 
-  void updateHabit(Habit habit) {
-    final index = _habits.indexWhere((h) => h.id == habit.id);
-    if (index != -1) {
-      _habits[index] = habit;
-    }
+  Future<void> updateHabit(Habit habit) async {
+    await _db.updateHabit(habit);
   }
 
-  void deleteHabit(String id) {
-    _habits.removeWhere((h) => h.id == id);
+  Future<void> deleteHabit(String id) async {
+    await _db.deleteHabit(id);
   }
 }
