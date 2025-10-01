@@ -1,167 +1,77 @@
-// lib/presentation/providers/task_provider.dart
-import 'package:flutter/foundation.dart';
+
+import 'package:flutter/material.dart';
+import 'package:task_management/data/models/task_model.dart';
 import 'package:task_management/domain/entities/task_entity.dart';
+import 'package:task_management/domain/repositories/task_repository.dart';
+import 'package:task_management/domain/repositories/user_repository.dart';
 
-import '../../core/errors/failure.dart';
-import '../../domain/repositories/task_repository.dart';
-
-class TaskProvider with ChangeNotifier {
+class TaskProvider extends ChangeNotifier {
   final TaskRepository taskRepository;
+  final UserRepository userRepository;
 
-  TaskProvider({required this.taskRepository});
+  TaskProvider({
+    required this.taskRepository,
+    required this.userRepository,
+  });
+
+  bool _isLoading = false;
+  bool get isLoading => _isLoading;
 
   List<TaskEntity> _tasks = [];
-  bool _isLoading = false;
-  Failure? _error;
-  String? _successMessage;
-
   List<TaskEntity> get tasks => _tasks;
-  bool get isLoading => _isLoading;
-  Failure? get error => _error;
-  String? get successMessage => _successMessage;
 
-  Future<void> loadTasks() async {
-    _isLoading = true;
-    _error = null;
+  void setLoading(bool loading) {
+    _isLoading = loading;
     notifyListeners();
+  }
 
+  Future<void> getTasks() async {
+    setLoading(true);
     final result = await taskRepository.getTasks();
-
     result.fold(
       (failure) {
-        _error = failure;
-        _isLoading = false;
-        notifyListeners();
+        // Handle failure
       },
       (tasks) {
         _tasks = tasks;
-        _isLoading = false;
-        _error = null;
-        notifyListeners();
       },
     );
+    setLoading(false);
   }
 
   Future<void> createTask(TaskEntity task) async {
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
-
     final result = await taskRepository.createTask(task);
-
     result.fold(
       (failure) {
-        _error = failure;
-        _isLoading = false;
-        notifyListeners();
+        // Handle failure
       },
-      (createdTask) {
-        _tasks.add(createdTask);
-        _isLoading = false;
-        _error = null;
-        _successMessage = 'Task created successfully';
-        notifyListeners();
-        
-        // Clear success message after 3 seconds
-        Future.delayed(const Duration(seconds: 3), () {
-          _successMessage = null;
-          notifyListeners();
-        });
+      (task) {
+        getTasks();
       },
     );
   }
 
   Future<void> updateTask(TaskEntity task) async {
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
-
     final result = await taskRepository.updateTask(task);
-
     result.fold(
       (failure) {
-        _error = failure;
-        _isLoading = false;
-        notifyListeners();
+        // Handle failure
       },
-      (updatedTask) {
-        final index = _tasks.indexWhere((t) => t.id == updatedTask.id);
-        if (index != -1) {
-          _tasks[index] = updatedTask;
-        }
-        _isLoading = false;
-        _error = null;
-        _successMessage = 'Task updated successfully';
-        notifyListeners();
-        
-        Future.delayed(const Duration(seconds: 3), () {
-          _successMessage = null;
-          notifyListeners();
-        });
+      (task) {
+        getTasks();
       },
     );
   }
 
   Future<void> deleteTask(String taskId) async {
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
-
     final result = await taskRepository.deleteTask(taskId);
-
     result.fold(
       (failure) {
-        _error = failure;
-        _isLoading = false;
-        notifyListeners();
+        // Handle failure
       },
       (_) {
-        _tasks.removeWhere((task) => task.id == taskId);
-        _isLoading = false;
-        _error = null;
-        _successMessage = 'Task deleted successfully';
-        notifyListeners();
-        
-        Future.delayed(const Duration(seconds: 3), () {
-          _successMessage = null;
-          notifyListeners();
-        });
+        getTasks();
       },
     );
-  }
-
-  Future<void> syncTasks() async {
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
-
-    final result = await taskRepository.syncTasks();
-
-    result.fold(
-      (failure) {
-        _error = failure;
-        _isLoading = false;
-        notifyListeners();
-      },
-      (_) {
-        _isLoading = false;
-        _error = null;
-        _successMessage = 'Tasks synced successfully';
-        notifyListeners();
-        
-        // Reload tasks after sync
-        loadTasks();
-        
-        Future.delayed(const Duration(seconds: 3), () {
-          _successMessage = null;
-          notifyListeners();
-        });
-      },
-    );
-  }
-
-  void clearError() {
-    _error = null;
-    notifyListeners();
   }
 }

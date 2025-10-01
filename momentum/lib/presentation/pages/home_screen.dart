@@ -1,48 +1,42 @@
-// lib/presentation/pages/home_page.dart
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:task_management/presentation/provider/user_provider.dart';
+import 'package:task_management/presentation/provider/task_provider.dart';
 
-class HomePage extends StatelessWidget {
-  const HomePage({super.key});
+class HomeScreen extends StatelessWidget {
+  const HomeScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final userProvider = Provider.of<UserProvider>(context);
-
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Task Management'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-              await userProvider.logout();
-              Navigator.pushReplacementNamed(context, '/login');
+        title: const Text('Momentum'),
+      ),
+      body: Consumer<TaskProvider>(
+        builder: (context, provider, child) {
+          if (provider.isLoading) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          }
+
+          if (provider.tasks.isEmpty) {
+            return const Center(
+              child: Text('No tasks yet!'),
+            );
+          }
+
+          return ListView.builder(
+            itemCount: provider.tasks.length,
+            itemBuilder: (context, index) {
+              final task = provider.tasks[index];
+              return ListTile(
+                title: Text(task.title),
+                subtitle: Text(task.description),
+              );
             },
-          ),
-        ],
-      ),
-      body: const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.check_circle, size: 64, color: Colors.green),
-            SizedBox(height: 20),
-            Text(
-              'Welcome to Task Management!',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 10),
-            Text('App is working successfully!'),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.pushNamed(context, '/task_form');
+          );
         },
-        child: const Icon(Icons.add),
       ),
     );
   }

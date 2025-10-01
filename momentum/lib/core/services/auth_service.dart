@@ -1,43 +1,38 @@
-// lib/core/services/auth_service.dart
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'api_service.dart';
 
 class AuthService {
-  static const String baseUrl = 'https://reqres.in/api';
-  
-  // Register user
-  Future<Map<String, dynamic>> register(String email, String password) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/register'),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({
-        'email': email,
-        'password': password,
-      }),
-    );
+  final ApiService _apiService;
+  late SharedPreferences _prefs;
 
-    if (response.statusCode == 200) {
-      return json.decode(response.body);
-    } else {
-      throw Exception('Registration failed: ${response.statusCode}');
-    }
+  AuthService(this._apiService) {
+    _initPrefs();
   }
 
-  // Login user
-  Future<Map<String, dynamic>> login(String email, String password) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/login'),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({
-        'email': email,
-        'password': password,
-      }),
-    );
+  Future<void> _initPrefs() async {
+    _prefs = await SharedPreferences.getInstance();
+  }
 
-    if (response.statusCode == 200) {
-      return json.decode(response.body);
-    } else {
-      throw Exception('Login failed: ${response.statusCode}');
-    }
+  Future<void> register(String email, String password) async {
+    final response = await _apiService.register(email, password);
+    // Assuming the API returns a token
+    final token = response['token'];
+    await _prefs.setString('token', token);
+  }
+
+  Future<void> login(String email, String password) async {
+    final response = await _apiService.login(email, password);
+    // Assuming the API returns a token
+    final token = response['token'];
+    await _prefs.setString('token', token);
+  }
+
+  Future<void> logout() async {
+    await _prefs.remove('token');
+  }
+
+  Future<bool> isLoggedIn() async {
+    final token = _prefs.getString('token');
+    return token != null;
   }
 }

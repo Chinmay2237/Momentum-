@@ -1,20 +1,54 @@
-// core/services/api_service.dart
+
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-
 import '../constants/api_constants.dart';
 import '../errors/exception.dart';
-import '../errors/failure.dart';
 
 class ApiService {
   final http.Client client;
 
   ApiService({required this.client});
 
-  Future<Map<String, dynamic>> post(String endpoint, 
-      {required Map<String, dynamic> body}) async {
+  // User Authentication
+  Future<Map<String, dynamic>> register(String email, String password) async {
+    return _post(ApiConstants.reqresBaseUrl, 'register', {'email': email, 'password': password});
+  }
+
+  Future<Map<String, dynamic>> login(String email, String password) async {
+    return _post(ApiConstants.reqresBaseUrl, 'login', {'email': email, 'password': password});
+  }
+
+  // Task Management
+  Future<List<dynamic>> getTasks() async {
+    final response = await _get(ApiConstants.jsonPlaceholderBaseUrl, 'todos');
+    return response;
+  }
+
+  Future<Map<String, dynamic>> createTask(Map<String, dynamic> taskData) async {
+    return _post(ApiConstants.jsonPlaceholderBaseUrl, 'todos', taskData);
+  }
+
+  Future<Map<String, dynamic>> updateTask(int taskId, Map<String, dynamic> taskData) async {
+    return _put(ApiConstants.jsonPlaceholderBaseUrl, 'todos/$taskId', taskData);
+  }
+
+  Future<void> deleteTask(int taskId) async {
+    await _delete(ApiConstants.jsonPlaceholderBaseUrl, 'todos/$taskId');
+  }
+
+  // User Information
+  Future<Map<String, dynamic>> getUsers() async {
+    return _get(ApiConstants.reqresBaseUrl, 'users');
+  }
+
+  Future<Map<String, dynamic>> getUser(int userId) async {
+    return _get(ApiConstants.reqresBaseUrl, 'users/$userId');
+  }
+
+  // Private helper methods
+  Future<dynamic> _post(String baseUrl, String endpoint, Map<String, dynamic> body) async {
     final response = await client.post(
-      Uri.parse('${ApiConstants.baseUrl}/$endpoint'),
+      Uri.parse('$baseUrl/$endpoint'),
       body: json.encode(body),
       headers: {'Content-Type': 'application/json'},
     );
@@ -26,9 +60,9 @@ class ApiService {
     }
   }
 
-  Future<Map<String, dynamic>> get(String endpoint) async {
+  Future<dynamic> _get(String baseUrl, String endpoint) async {
     final response = await client.get(
-      Uri.parse('${ApiConstants.baseUrl}/$endpoint'),
+      Uri.parse('$baseUrl/$endpoint'),
       headers: {'Content-Type': 'application/json'},
     );
 
@@ -39,10 +73,9 @@ class ApiService {
     }
   }
 
-Future<Map<String, dynamic>> put(String endpoint, 
-      {required Map<String, dynamic> body}) async {
+  Future<dynamic> _put(String baseUrl, String endpoint, Map<String, dynamic> body) async {
     final response = await client.put(
-      Uri.parse('${ApiConstants.baseUrl}/$endpoint'),
+      Uri.parse('$baseUrl/$endpoint'),
       body: json.encode(body),
       headers: {'Content-Type': 'application/json'},
     );
@@ -54,9 +87,9 @@ Future<Map<String, dynamic>> put(String endpoint,
     }
   }
 
-  Future<void> delete(String endpoint) async {
+  Future<void> _delete(String baseUrl, String endpoint) async {
     final response = await client.delete(
-      Uri.parse('${ApiConstants.baseUrl}/$endpoint'),
+      Uri.parse('$baseUrl/$endpoint'),
       headers: {'Content-Type': 'application/json'},
     );
 
