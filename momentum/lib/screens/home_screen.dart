@@ -1,1 +1,165 @@
-\nimport \'package:flutter/material.dart\';\nimport \'package:momentum/services/habit_service.dart\';\nimport \'package:momentum/widgets/habit_card.dart\';\nimport \'package:momentum/models/habit.dart\';\nimport \'package:momentum/screens/edit_habit_screen.dart\';\n\nclass HomeScreen extends StatefulWidget {\n  const HomeScreen({Key? key}) : super(key: key);\n\n  @override\n  State<HomeScreen> createState() => _HomeScreenState();\n}\n\nclass _HomeScreenState extends State<HomeScreen> {\n  final HabitService _habitService = HabitService();\n  late Future<List<Habit>> _habitsFuture;\n\n  @override\n  void initState() {\n    super.initState();\n    _refreshHabits();\n  }\n\n  void _refreshHabits() {\n    setState(() {\n      _habitsFuture = _habitService.getHabits();\n    });\n  }\n\n  @override\n  Widget build(BuildContext context) {\n    return Scaffold(\n      appBar: AppBar(\n        title: const Text(\'Momentum\'),\n      ),\n      body: FutureBuilder<List<Habit>>(\n        future: _habitsFuture,\n        builder: (context, snapshot) {\n          if (snapshot.connectionState == ConnectionState.waiting) {\n            return const Center(child: CircularProgressIndicator());\n          } else if (snapshot.hasError) {\n            return Center(child: Text(\'Error: \${snapshot.error}\'));\n          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {\n            return const Center(child: Text(\'No habits yet. Add one!\'));\n          } else {\n            final habits = snapshot.data!;\n            return ListView.builder(\n              itemCount: habits.length,\n              itemBuilder: (context, index) {\n                return HabitCard(habit: habits[index]);\n              },\n            );\n          }\n        },\n      ),\n      floatingActionButton: FloatingActionButton(\n        onPressed: () async {\n          await Navigator.push(\n            context,\n            MaterialPageRoute(builder: (context) => const EditHabitScreen()),\n          );\n          _refreshHabits();\n        },\n        child: const Icon(Icons.add),\n      ),\n    );\n  }\n}\n
+
+import 'package:flutter/material.dart';
+import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
+import 'package:momentum/models/note.dart';
+import 'package:momentum/screens/canvas_screen.dart';
+import 'package:momentum/screens/edit_note_screen.dart';
+import 'package:momentum/services/note_service.dart';
+
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({Key? key}) : super(key: key);
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final NoteService _noteService = NoteService();
+  late Future<List<Note>> _notesFuture;
+  String _searchQuery = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _refreshNotes();
+  }
+
+  void _refreshNotes() {
+    setState(() {
+      _notesFuture = _noteService.getNotes();
+    });
+  }
+
+  List<Note> _filterNotes(List<Note> notes) {
+    if (_searchQuery.isEmpty) {
+      return notes;
+    }
+    return notes.where((note) => note.title.toLowerCase().contains(_searchQuery.toLowerCase()) || note.content.toLowerCase().contains(_searchQuery.toLowerCase())).toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Notes'),
+      ),
+      body: Container(
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: const AssetImage('assets/images/background.png'),
+            fit: BoxFit.cover,
+            colorFilter: ColorFilter.mode(
+              Colors.black.withOpacity(0.5),
+              BlendMode.dstATop,
+            ),
+          ),
+        ),
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: TextField(
+                onChanged: (value) {
+                  setState(() {
+                    _searchQuery = value;
+                  });
+                },
+                decoration: const InputDecoration(
+                  hintText: 'Search notes...',
+                  prefixIcon: Icon(Icons.search),
+                ),
+              ),
+            ),
+            Expanded(
+              child: FutureBuilder<List<Note>>(
+                future: _notesFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return const Center(child: Text('No notes yet. Add one!'));
+                  } else {
+                    final notes = _filterNotes(snapshot.data!);
+                    return MasonryGridView.count(
+                      crossAxisCount: 2,
+                      itemCount: notes.length,
+                      itemBuilder: (context, index) {
+                        final note = notes[index];
+                        return GestureDetector(
+                          onTap: () async {
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => EditNoteScreen(note: note),
+                              ),
+                            );
+                            _refreshNotes();
+                          },
+                          child: Card(
+                            color: Color(note.color).withOpacity(0.8),
+                            margin: const EdgeInsets.all(8.0),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12.0),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    note.title,
+                                    style: Theme.of(context).textTheme.subtitle1,
+                                  ),
+                                  const SizedBox(height: 8.0),
+                                  Text(
+                                    note.content,
+                                    style: Theme.of(context).textTheme.bodyText2,
+                                    maxLines: 5,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  }
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+      floatingActionButton: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          FloatingActionButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const CanvasScreen()),
+              );
+            },
+            heroTag: 'canvas',
+            child: const Icon(Icons.brush),
+          ),
+          const SizedBox(height: 16),
+          FloatingActionButton(
+            onPressed: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const EditNoteScreen()),
+              );
+              _refreshNotes();
+            },
+            heroTag: 'add_note',
+            child: const Icon(Icons.add),
+          ),
+        ],
+      ),
+    );
+  }
+}

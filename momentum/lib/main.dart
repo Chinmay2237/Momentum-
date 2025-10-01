@@ -1,21 +1,20 @@
-
 import 'package:flutter/material.dart';
-import 'package:momentum/app/screens/home_screen.dart';
-import 'package:momentum/app/theme/theme.dart';
+import 'package:momentum/screens/login_screen.dart';
+import 'package:momentum/theme/theme.dart';
 
 void main() {
-  runApp(const AuraApp());
+  runApp(const MomentumApp());
 }
 
-class AuraApp extends StatelessWidget {
-  const AuraApp({Key? key}) : super(key: key);
+class MomentumApp extends StatelessWidget {
+  const MomentumApp({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Aura - Habit Garden',
+      title: 'Momentum',
       theme: appTheme,
-      home: const HomeScreen(),
+      home: const LoginScreen(),
     );
   }
 }
