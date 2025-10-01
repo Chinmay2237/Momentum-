@@ -22,6 +22,7 @@ dependencies:
   flutter_local_notifications: ^12.0.4
   flutter_alarm_clock: ^0.0.2
   fl_chart: ^0.62.0
+  flutter_secure_storage: ^9.2.4
 
 dev_dependencies:
   flutter_test:

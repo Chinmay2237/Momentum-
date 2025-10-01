@@ -30,11 +30,11 @@ final ThemeData appTheme = ThemeData(
     ),
   ),
   textTheme: const TextTheme(
-    headline1: TextStyle(fontSize: 72.0, fontWeight: FontWeight.bold, color: Colors.white),
-    headline6: TextStyle(fontSize: 36.0, fontStyle: FontStyle.italic, color: Colors.white),
-    bodyText2: TextStyle(fontSize: 16.0, fontFamily: 'Roboto', color: Colors.white70),
-    subtitle1: TextStyle(fontSize: 18.0, fontWeight: FontWeight.w500, color: Colors.white),
-    subtitle2: TextStyle(fontSize: 14.0, fontWeight: FontWeight.w400, color: Colors.white60),
+    displayLarge: TextStyle(fontSize: 72.0, fontWeight: FontWeight.bold, color: Colors.white),
+    titleLarge: TextStyle(fontSize: 36.0, fontStyle: FontStyle.italic, color: Colors.white),
+    bodyMedium: TextStyle(fontSize: 16.0, fontFamily: 'Roboto', color: Colors.white70),
+    titleMedium: TextStyle(fontSize: 18.0, fontWeight: FontWeight.w500, color: Colors.white),
+    titleSmall: TextStyle(fontSize: 14.0, fontWeight: FontWeight.w400, color: Colors.white60),
   ),
   inputDecorationTheme: const InputDecorationTheme(
     border: OutlineInputBorder(

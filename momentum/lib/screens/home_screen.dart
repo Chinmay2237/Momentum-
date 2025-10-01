@@ -109,12 +109,12 @@ class _HomeScreenState extends State<HomeScreen> {
                                 children: [
                                   Text(
                                     note.title,
-                                    style: Theme.of(context).textTheme.subtitle1,
+                                    style: Theme.of(context).textTheme.labelMedium,
                                   ),
                                   const SizedBox(height: 8.0),
                                   Text(
                                     note.content,
-                                    style: Theme.of(context).textTheme.bodyText2,
+                                    style: Theme.of(context).textTheme.displaySmall,
                                     maxLines: 5,
                                     overflow: TextOverflow.ellipsis,
                                   ),
