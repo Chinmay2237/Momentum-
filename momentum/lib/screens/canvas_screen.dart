@@ -5,6 +5,8 @@ import 'package:painter/painter.dart';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
+import 'dart:ui' as ui;
+import 'package:flutter/rendering.dart';
 
 class CanvasScreen extends StatefulWidget {
   const CanvasScreen({Key? key}) : super(key: key);
@@ -15,29 +17,35 @@ class CanvasScreen extends StatefulWidget {
 
 class _CanvasScreenState extends State<CanvasScreen> {
   late PainterController _controller;
+  final GlobalKey _globalKey = GlobalKey();
 
   @override
   void initState() {
     super.initState();
-    _controller = PainterController(
-      settings: PainterSettings(
-        freeStyle: const FreeStyleSettings(
-          color: Colors.black,
-          strokeWidth: 5,
-        ),
-      ),
-    );
+    _controller = PainterController();
+    _controller.thickness = 5.0;
+    _controller.drawColor = Colors.black;
   }
 
   void _saveDrawing() async {
-    final Uint8List? data = await _controller.exportAsPNGBytes();
-    if (data != null) {
+    try {
+      RenderRepaintBoundary boundary =
+          _globalKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
+      ui.Image image = await boundary.toImage(pixelRatio: 3.0);
+      ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+      Uint8List pngBytes = byteData!.buffer.asUint8List();
+
       final directory = await getTemporaryDirectory();
       final file = File('${directory.path}/drawing.png');
-      await file.writeAsBytes(data);
+      await file.writeAsBytes(pngBytes);
       await ImageGallerySaver.saveFile(file.path);
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Drawing saved to gallery!')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error saving drawing: $e')),
       );
     }
   }
@@ -54,14 +62,17 @@ class _CanvasScreenState extends State<CanvasScreen> {
           ),
         ],
       ),
-      body: Painter(_controller),
+      body: RepaintBoundary(
+        key: _globalKey,
+        child: Painter(_controller),
+      ),
       floatingActionButton: Column(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
           FloatingActionButton(
             onPressed: () {
               setState(() {
-                _controller.freeStyleColor = Colors.red;
+                _controller.drawColor = Colors.red;
               });
             },
             child: const Icon(Icons.circle, color: Colors.red),
@@ -70,7 +81,7 @@ class _CanvasScreenState extends State<CanvasScreen> {
           FloatingActionButton(
             onPressed: () {
               setState(() {
-                _controller.freeStyleColor = Colors.green;
+                _controller.drawColor = Colors.green;
               });
             },
             child: const Icon(Icons.circle, color: Colors.green),
@@ -79,7 +90,7 @@ class _CanvasScreenState extends State<CanvasScreen> {
           FloatingActionButton(
             onPressed: () {
               setState(() {
-                _controller.freeStyleColor = Colors.blue;
+                _controller.drawColor = Colors.blue;
               });
             },
             child: const Icon(Icons.circle, color: Colors.blue),
@@ -92,6 +103,14 @@ class _CanvasScreenState extends State<CanvasScreen> {
               });
             },
             child: const Icon(Icons.undo),
+          ),
+           FloatingActionButton(
+            onPressed: () {
+              setState(() {
+                _controller.clear();
+              });
+            },
+            child: const Icon(Icons.delete),
           ),
         ],
       ),

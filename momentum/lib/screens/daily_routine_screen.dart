@@ -1,7 +1,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:flutter_alarm_clock/flutter_alarm_clock.dart';
+import 'package:momentum/services/notification_service.dart';
 
 class DailyRoutineScreen extends StatefulWidget {
   const DailyRoutineScreen({Key? key}) : super(key: key);
@@ -13,6 +13,7 @@ class DailyRoutineScreen extends StatefulWidget {
 class _DailyRoutineScreenState extends State<DailyRoutineScreen> {
   List<FlSpot> _spots = [];
   List<DateTime> _markedTimes = [];
+  TimeOfDay _reminderTime = const TimeOfDay(hour: 8, minute: 0); // Default reminder time
 
   void _markProgress() {
     setState(() {
@@ -22,6 +23,30 @@ class _DailyRoutineScreenState extends State<DailyRoutineScreen> {
         return FlSpot(time.hour.toDouble(), _markedTimes.where((t) => t.hour == time.hour).length.toDouble());
       }).toList();
     });
+  }
+
+  Future<void> _selectReminderTime(BuildContext context) async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: _reminderTime,
+    );
+    if (picked != null && picked != _reminderTime) {
+      setState(() {
+        _reminderTime = picked;
+      });
+    }
+  }
+
+  void _setDailyReminder() {
+    NotificationService().scheduleDailyNotification(
+      1, // A unique ID for this notification
+      'Daily Routine Reminder',
+      'Time to complete your daily routine!',
+      _reminderTime,
+    );
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Daily reminder set for ${_reminderTime.format(context)}')),
+    );
   }
 
   @override
@@ -62,11 +87,14 @@ class _DailyRoutineScreenState extends State<DailyRoutineScreen> {
               ),
             ),
             const SizedBox(height: 20),
+            ListTile(
+              title: Text('Reminder Time: ${_reminderTime.format(context)}'),
+              trailing: const Icon(Icons.edit),
+              onTap: () => _selectReminderTime(context),
+            ),
             ElevatedButton(
-              onPressed: () {
-                FlutterAlarmClock.createAlarm(hour: 8, title: 'Daily Routine');
-              },
-              child: const Text('Set Reminder'),
+              onPressed: _setDailyReminder,
+              child: const Text('Set Daily Reminder'),
             ),
             const SizedBox(height: 20),
             ElevatedButton(
