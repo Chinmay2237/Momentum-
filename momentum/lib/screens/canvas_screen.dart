@@ -2,22 +2,44 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:painter/painter.dart';
+import 'package:image_gallery_saver/image_gallery_saver.dart';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
 
 class CanvasScreen extends StatefulWidget {
   const CanvasScreen({Key? key}) : super(key: key);
 
   @override
-  State<CanvasScreen> createState() => _CanvasScreenState();
+  _CanvasScreenState createState() => _CanvasScreenState();
 }
 
 class _CanvasScreenState extends State<CanvasScreen> {
-  final PainterController _controller = PainterController();
+  late PainterController _controller;
 
   @override
   void initState() {
     super.initState();
-    _controller.thickness = 5.0;
-    _controller.backgroundColor = Colors.white;
+    _controller = PainterController(
+      settings: PainterSettings(
+        freeStyle: const FreeStyleSettings(
+          color: Colors.black,
+          strokeWidth: 5,
+        ),
+      ),
+    );
+  }
+
+  void _saveDrawing() async {
+    final Uint8List? data = await _controller.exportAsPNGBytes();
+    if (data != null) {
+      final directory = await getTemporaryDirectory();
+      final file = File('${directory.path}/drawing.png');
+      await file.writeAsBytes(data);
+      await ImageGallerySaver.saveFile(file.path);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Drawing saved to gallery!')),
+      );
+    }
   }
 
   @override
@@ -28,50 +50,48 @@ class _CanvasScreenState extends State<CanvasScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.save),
-            onPressed: () async {
-              final Uint8List? imageBytes = await _controller.exportAsPNGBytes();
-              if (imageBytes != null) {
-                // TODO: Save the image as a note
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Image saved to gallery')),
-                );
-                Navigator.of(context).pop();
-              }
-            },
+            onPressed: _saveDrawing,
           ),
         ],
       ),
-      body: Column(
+      body: Painter(_controller),
+      floatingActionButton: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          Expanded(
-            child: Painter(_controller),
+          FloatingActionButton(
+            onPressed: () {
+              setState(() {
+                _controller.freeStyleColor = Colors.red;
+              });
+            },
+            child: const Icon(Icons.circle, color: Colors.red),
+            mini: true,
           ),
-          Container(
-            color: Colors.grey[200],
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.undo),
-                  onPressed: () {
-                    _controller.undo();
-                  },
-                ),
-                IconButton(
-                  icon: const Icon(Icons.redo),
-                  onPressed: () {
-                    _controller.redo();
-                  },
-                ),
-                IconButton(
-                  icon: const Icon(Icons.clear),
-                  onPressed: () {
-                    _controller.clear();
-                  },
-                ),
-              ],
-            ),
+          FloatingActionButton(
+            onPressed: () {
+              setState(() {
+                _controller.freeStyleColor = Colors.green;
+              });
+            },
+            child: const Icon(Icons.circle, color: Colors.green),
+            mini: true,
+          ),
+          FloatingActionButton(
+            onPressed: () {
+              setState(() {
+                _controller.freeStyleColor = Colors.blue;
+              });
+            },
+            child: const Icon(Icons.circle, color: Colors.blue),
+            mini: true,
+          ),
+          FloatingActionButton(
+            onPressed: () {
+              setState(() {
+                _controller.undo();
+              });
+            },
+            child: const Icon(Icons.undo),
           ),
         ],
       ),

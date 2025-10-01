@@ -2,7 +2,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:momentum/models/note.dart';
-import 'package:momentum/screens/canvas_screen.dart';
 import 'package:momentum/screens/edit_note_screen.dart';
 import 'package:momentum/services/note_service.dart';
 
@@ -138,10 +137,23 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           FloatingActionButton(
             onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const CanvasScreen()),
-              );
+              Navigator.pushNamed(context, '/daily_routine');
+            },
+            heroTag: 'daily_routine',
+            child: const Icon(Icons.task_alt),
+          ),
+          const SizedBox(height: 16),
+          FloatingActionButton(
+            onPressed: () {
+              Navigator.pushNamed(context, '/reminders');
+            },
+            heroTag: 'reminders',
+            child: const Icon(Icons.alarm),
+          ),
+          const SizedBox(height: 16),
+          FloatingActionButton(
+            onPressed: () {
+              Navigator.pushNamed(context, '/canvas');
             },
             heroTag: 'canvas',
             child: const Icon(Icons.brush),
